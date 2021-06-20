@@ -1,0 +1,78 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+#time_menu {
+    width: 100%;
+    margin: 5px;
+    /* height: 3em; */
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.sub_menu {
+    overflow: visible;
+    padding-right: 0.5em;
+}
+
+#birds {
+    display: flex;
+    width: 100%;
+    margin: 0.5em;
+    flex-wrap: wrap;
+}
+
+.bird {
+    display: flex;
+    flex-direction: column;
+    max-width: 320px;
+    height: auto;
+    margin-right: 4em;
+    margin-bottom: 4em;
+}
+
+/* iframe {
+    width: 100%;
+    height: 100%;
+} */
+
+body, html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.downvotes {
+    display: flex;
+}
+
+.downvotes a {
+    padding-right: 1em;
+}
+
+.bird a {
+    padding-top: 0.5em;
+}
+
+.text p {
+    font-size: small;
+    margin: 0;
+    overflow: hidden;
+}
+
+.text {
+    display: -webkit-box;
+    -webkit-line-clamp: 9;
+    -webkit-box-orient: vertical;
+}
+
+li {
+    list-style-type: none;
+    float: left;
+    padding-right: 1em;
+}
+
+ul {
+    list-style-type: none;
+}

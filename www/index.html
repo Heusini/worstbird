@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="index.css" rel="stylesheet" type="text/css" />
+    <title>Worstbird</title>
+</head>
+
+<body>
+    <h1>Worstbird</h1>
+    <div id="time_menu">
+        <div class="sub_menu">
+            <a href="google.de">2021</a>
+        </div>
+        <div class="sub_menu">
+            <a href="google.de">2022</a>
+            <ul>
+                <a href="google.de">Jan</a>
+                <a href="google.de">Feb</a>
+                <a href="google.de">Mar</a>
+                <a href="google.de">Apr</a>
+                <a href="google.de">Mai</a>
+                <a href="google.de">Jun</a>
+                <a href="google.de">Jul</a>
+                <a href="google.de">Aug</a>
+                <a href="google.de">Sep</a>
+                <a href="google.de">Oct</a>
+                <a href="google.de">Nov</a>
+                <a href="google.de">Dez</a>
+            </ul>
+        </div>
+        <div class="sub_menu">
+            <a href="google.de">2023</a>
+        </div>
+        <div class="sub_menu">
+            <a href="google.de">2024</a>
+        </div>
+        <div class="sub_menu">
+            <a href="google.de">2025</a>
+        </div>
+        <div class="sub_menu">
+            <a href="google.de">2026</a>
+        </div>
+        <div class="sub_menu">
+            <a href="google.de">2026</a>
+        </div>
+        <div class="sub_menu">
+            <a href="google.de">2026</a>
+        </div>
+        <div class="sub_menu">
+            <a href="google.de">2026</a>
+        </div>
+    </div>
+
+    <div id="birds">
+        <div class="bird">
+            <h4>BirdName</h4>
+            <iframe width="320" src="https://macaulaylibrary.org/asset/204278651/embed/320" frameborder="0"
+                allowfullscreen style="width:320px;" id="bird1"></iframe>
+            <div class="text">
+                <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Adipisci aliquid sunt autem rerum eligendi
+                    expedita mollitia possimus velit quos cum esse modi corporis non aut voluptatem quia, nobis,
+                    deleniti
+                    placeat.</p>
+            </div>
+            <a href="https://google.com">DownVote</a>
+        </div>
+        <div class="bird">
+            <h4>BirdName</h4>
+            <iframe width="320" src="https://macaulaylibrary.org/asset/128111791/embed/320" frameborder="0"
+                allowfullscreen style="width:320px;"></iframe>
+            <div class="text">
+                <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Adipisci aliquid sunt autem rerum eligendi
+                    expedita mollitia possimus velit quos cum esse modi corporis non aut voluptatem quia, nobis,
+                    deleniti
+                    placeat.</p>
+            </div>
+            <div class="downvotes">
+                <a href="https://google.com">DownVote</a>
+                <a>Votes: 5</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Selecting the iframe element
+
+        var iframe = document.getElementById("bird1");
+        const vh = Math.max(iframe.documentElement.clientHeight || 0, window.innerHeight || 0);
+
+        // Adjusting the iframe height onload event
+        iframe.onload = function () {
+            iframe.style.height = iframe.contentWindow.document.body.scrollHeight + 'px';
+        }
+    </script>
+</body>
+
+</html>
