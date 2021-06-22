@@ -4,11 +4,11 @@
 }
 
 #time_menu {
-    width: 100%;
-    margin: 5px;
-    /* height: 3em; */
     display: flex;
     flex-wrap: wrap;
+    /* margin: 5px; */
+    width: 100%;
+    height: 3em;
 }
 
 .sub_menu {
@@ -19,17 +19,47 @@
 #birds {
     display: flex;
     width: 100%;
-    margin: 0.5em;
+    margin-top: 2em;
     flex-wrap: wrap;
+}
+
+#worstbirds {
+    display: flex;
+    width: 100%;
+    margin-top: 2em;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.vote {
+    margin-top: 0.5em;
+    margin-bottom: 1em;
+}
+
+.error {
+    color: red;
 }
 
 .bird {
     display: flex;
     flex-direction: column;
-    max-width: 320px;
     height: auto;
-    margin-right: 4em;
+    max-width: 320px;
+    margin-right: 2em;
+    margin-left: 2em;
     margin-bottom: 4em;
+}
+
+#content {
+    margin: 1em;
+}
+
+#votecounter {
+    float: right;
+}
+
+#votebirds {
+    margin-top: 1em;
 }
 
 /* iframe {
@@ -40,7 +70,6 @@
 body, html {
     width: 100%;
     height: 100%;
-    overflow: hidden;
 }
 
 .downvotes {
@@ -49,10 +78,6 @@ body, html {
 
 .downvotes a {
     padding-right: 1em;
-}
-
-.bird a {
-    padding-top: 0.5em;
 }
 
 .text p {
@@ -70,9 +95,20 @@ body, html {
 li {
     list-style-type: none;
     float: left;
-    padding-right: 1em;
+    padding-left: 0.25em;
+    padding-right: 0.25em;
 }
 
 ul {
     list-style-type: none;
+}
+
+@media only screen and (max-width: 500px) {
+    #content {
+        margin: 0.5em;
+    }
+    .bird {
+        margin-right: 0;
+        margin-left: 0.5em;
+    }
 }
