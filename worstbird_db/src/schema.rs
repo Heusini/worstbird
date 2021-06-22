@@ -30,8 +30,4 @@ table! {
 joinable!(worstbird_month -> bird (bird_id));
 joinable!(worstbird_year -> bird (bird_id));
 
-allow_tables_to_appear_in_same_query!(
-    bird,
-    worstbird_month,
-    worstbird_year,
-);
+allow_tables_to_appear_in_same_query!(bird, worstbird_month, worstbird_year,);
