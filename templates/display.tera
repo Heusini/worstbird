@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="/www/index.css" rel="stylesheet" type="text/css" />
+    <title>Worstbird</title>
+</head>
+
+<body>
+    <div id="content">
+        <h1>Worstbird</h1>
+        <div id="time_menu">
+            {%- if years|length == 0 -%}
+            <div class="sub_menu">
+                <a href="/{{ sel_year }}">{{ sel_year }}</a>
+                <ul>
+                    {%- for month in months -%}
+                    <li><a href="/{{ sel_year }}/{{ months_num[loop.index0] }}">{{ month }}</a></li>
+                    {%- endfor -%}
+                </ul>
+            </div>
+            {%- else -%}
+            {%- for year in years -%}
+            <div class="sub_menu">
+                <a href="/{{ sel_year }}">{{ sel_year }}</a>
+                {%- if year == sel_year -%}
+                <ul>
+                    {%- for month in months -%}
+                    <li><a href="/{{ year }}/{{ months_num[loop.index0] }}">{{ month }}</a></li>
+                    {%- endfor -%}
+                </ul>
+                {%- endif -%}
+            </div>
+            {%- endfor -%}
+            {%- endif -%}
+        </div>
+
+        {%- if birds|length == 0 -%}
+        <h2>There was no Worstbird crowned for this Year</h2>
+        {%- else -%}
+        <h2>Worstbirds of {{ sel_year }}</h2>
+        <div id="worstbirds">
+            {%- for bird in birds -%}
+            {%- if bird.1 == max_vote -%}
+            <div class="bird">
+                <h4>{{ bird.0.name }}</h4>
+                <iframe width="{{ bird.0.width}}" height="{{ bird.0.height + 130 }}"
+                    src="https://macaulaylibrary.org/asset/{{ bird.0.assetid }}/embed/320" frameborder="0"
+                    allowfullscreen style="width:320px;"></iframe>
+                <div class="text">
+                    <p>{{ bird.0.description }}</p>
+                </div>
+                <div>
+                    <a id="votecounter">Votes: {{ bird.1 }}</a>
+                </div>
+            </div>
+            {%- endif -%}
+            {%- endfor -%}
+        </div>
+        <h2>Other birds voted for this year {{ sel_year }}</h2>
+        <div id="birds">
+            {%- for bird in birds -%}
+            {%- if bird.1 != max_vote -%}
+            <div class="bird">
+                <h4>{{ bird.0.name }}</h4>
+                <iframe width="{{ bird.0.width }}" height="{{ bird.0.height + 130 }}"
+                    src="https://macaulaylibrary.org/asset/{{ bird.0.assetid }}/embed/320" frameborder="0"
+                    allowfullscreen style="width:320px;"></iframe>
+                <div class="text">
+                    <p>{{ bird.0.description }}</p>
+                </div>
+                <div>
+                    <a id="votecounter">Votes: {{ bird.1 }}</a>
+                </div>
+            </div>
+            {%- endif -%}
+            {%- endfor -%}
+            {%- endif -%}
+        </div>
+    </div>
+</body>
+
+</html>
