@@ -1,5 +1,5 @@
 [workspace]
-members = ["worstbird_fetcher", "worstbird_http", "worstbird_db"]
+members = ["worstbird_fetcher", "worstbird_http", "worstbird_db", "worstbird_tera_test"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
