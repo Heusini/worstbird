@@ -4,7 +4,7 @@ use imagesize;
 
 pub fn get_bird_name(data: &str) -> Result<String> {
     let name: String = data
-        .split(r#"<h1 class="Media--hero-title">"#)
+        .split(r#"Media--hero-title">"#)
         .nth(1)
         .ok_or("no bird name")?
         .chars()
@@ -33,8 +33,8 @@ pub fn get_image_size(embed_id: &str) -> Result<(usize, usize)> {
         embed_id
     );
     println!("{}", &url);
-    let response = reqwest::blocking::get(&url).unwrap();
-    match imagesize::blob_size(&response.bytes().unwrap()) {
+    let response = reqwest::blocking::get(&url)?;
+    match imagesize::blob_size(&response.bytes()?) {
         Ok(dim) => Ok((dim.width, dim.height)),
         Err(_) => Err("Could not get image dimensions".into()),
     }
