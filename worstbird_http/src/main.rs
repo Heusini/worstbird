@@ -8,6 +8,7 @@ extern crate rocket_contrib;
 
 pub mod session;
 pub mod tera_models;
+pub mod util;
 extern crate dotenv;
 use dotenv::dotenv;
 
@@ -15,14 +16,13 @@ use std::net::IpAddr;
 use std::net::SocketAddr;
 
 use diesel::prelude::*;
-use diesel::sql_types::Integer;
 
 use chrono::prelude::*;
 use chrono::Month;
 use num_traits::FromPrimitive;
 
 use crate::tera_models::{TeraDownVote, TeraTemplate};
-use rocket::http::{Cookie, Cookies};
+use rocket::http::Cookies;
 use rocket::response::Redirect;
 use rocket::State;
 
@@ -32,39 +32,8 @@ use rocket_contrib::templates::Template;
 use chashmap::CHashMap;
 
 use crate::session::{MonthCookie, YearCookie};
+use crate::util::*;
 use worstbird_db::models;
-
-#[derive(QueryableByName)]
-struct DistinctYear {
-    #[sql_type = "Integer"]
-    year: i32,
-}
-
-#[derive(QueryableByName)]
-struct DistinctMonth {
-    #[sql_type = "Integer"]
-    month: i32,
-}
-
-static MAX_IP_VOTE: u32 = 20;
-#[derive(Debug)]
-struct UserVoteCount {
-    count: u32,
-    expiration: chrono::DateTime<Local>,
-}
-
-fn get_expire_date() -> DateTime<Local> {
-    let now = Local::now();
-    let new_date;
-
-    if now.month() == 12 {
-        new_date = Local.ymd(now.year() + 1, 1, 1).and_hms(0, 5, 0);
-    } else {
-        new_date = Local.ymd(now.year(), now.month() + 1, 1).and_hms(0, 5, 0);
-    }
-
-    new_date
-}
 
 #[get("/downvote/<birdid>/<sel_year>")]
 fn downvote_year_user(
@@ -103,37 +72,6 @@ fn downvote_year_user(
     Ok(Template::render("already_downvoted", &context))
 }
 
-fn get_ip_vote_count(
-    state: State<CHashMap<IpAddr, UserVoteCount>>,
-    remote_addr: SocketAddr,
-) -> u32 {
-    state.inner().upsert(
-        remote_addr.ip(),
-        || UserVoteCount {
-            count: 1,
-            expiration: get_expire_date(),
-        },
-        |e| e.count += 1,
-    );
-
-    let user_vote = state.inner().get(&remote_addr.ip()).unwrap();
-    if user_vote.expiration < Local::now() {
-        state.inner().insert(
-            remote_addr.ip(),
-            UserVoteCount {
-                count: 1,
-                expiration: get_expire_date(),
-            },
-        );
-        1
-    } else {
-        println!("{}", user_vote.count);
-        println!("{}", remote_addr);
-        println!("{:?}", state.inner());
-        user_vote.count
-    }
-}
-
 #[get("/downvote/<birdid>/<sel_year>", rank = 2)]
 fn downvote_year(
     state: State<CHashMap<IpAddr, UserVoteCount>>,
@@ -143,7 +81,12 @@ fn downvote_year(
     sel_year: i32,
     birdid: u32,
 ) -> Result<Template, Box<dyn std::error::Error>> {
+    let now = Local::now();
     check_year(sel_year)?;
+
+    if now.year() - 1 != sel_year && now.month() != 1 {
+        return Err("Not allowed to vote this month".into());
+    }
     use worstbird_db::schema::worstbird_year::dsl::*;
 
     let wb_year: models::WBYear = diesel::update(worstbird_year.find((birdid as i32, sel_year)))
@@ -174,20 +117,6 @@ fn downvote_year(
     } else {
         Ok(Template::render("downvoted", &context))
     }
-}
-
-fn set_cookie(
-    key: &str,
-    cookies: &mut Cookies,
-    bird_id: u32,
-) -> Result<(), Box<dyn std::error::Error>> {
-    let expire_date = get_expire_date();
-    let cookie_str = format!("{}={}; Expires={}", key, bird_id, expire_date);
-    let mut cookie = Cookie::parse(cookie_str)?;
-    cookie.set_secure(false);
-    cookie.set_path("/downvote");
-    cookies.add(cookie);
-    Ok(())
 }
 
 #[get("/downvote/<birdid>/<sel_year>/<sel_month>")]
@@ -246,6 +175,11 @@ fn downvote_month(
     check_year(sel_year)?;
     check_month(sel_month)?;
 
+    let now = Local::now();
+    if now.year() != sel_year && now.month() != sel_month {
+        return Err("Voting for this month is not allowed".into());
+    }
+
     use worstbird_db::schema::worstbird_month::dsl::*;
 
     let wb_month: models::WBMonth =
@@ -284,34 +218,6 @@ fn downvote_month(
     }
 }
 
-fn check_year(year: i32) -> Result<(), Box<dyn std::error::Error>> {
-    if year < 0 || year > 3333 {
-        Err("This year does not excist in the worstbird timeline".into())
-    } else {
-        Ok(())
-    }
-}
-
-fn check_month(month: u32) -> Result<(), Box<dyn std::error::Error>> {
-    if month < 1 || month > 12 {
-        return Err("This month does not exist in this universe".into());
-    } else {
-        Ok(())
-    }
-}
-
-fn get_years(conn: &PgConnection) -> Result<Vec<i32>, Box<dyn std::error::Error>> {
-    let now = Utc::now();
-    let distinct_years: Vec<DistinctYear> =
-        diesel::sql_query("select distinct year from worstbird_year").load(&*conn)?;
-    let mut years: Vec<i32> = distinct_years.iter().map(|e| e.year).collect();
-    if !years.contains(&now.year()) {
-        years.push(now.year());
-        years.sort();
-    }
-    Ok(years)
-}
-
 // implement
 // fn get_months(conn: PgDatabase) -> Result<Vec<Month>, Box<dyn std::error::Error>> {}
 
@@ -322,13 +228,10 @@ fn get_worstbird_year(
 ) -> Result<Template, Box<dyn std::error::Error>> {
     check_year(sel_year)?;
     let now = Utc::now();
-    let distinct_years = get_years(&*conn)?;
+    let mut distinct_years = get_distinct_years(&*conn)?;
+    distinct_years.push(now.year());
 
-    let distinct_months: Vec<DistinctMonth> = diesel::sql_query(format!(
-        "select distinct month from worstbird_month where year = {}",
-        sel_year
-    ))
-    .load(&*conn)?;
+    let distinct_months: Vec<u32> = get_distinct_months(&conn, sel_year)?;
 
     use worstbird_db::schema::bird::dsl::*;
     use worstbird_db::schema::worstbird_year::dsl::*;
@@ -346,25 +249,19 @@ fn get_worstbird_year(
         years: distinct_years,
         months: distinct_months
             .iter()
-            .map(|e| Month::from_u32(e.month as u32).unwrap())
+            .map(|e| Month::from_u32(*e).unwrap())
             .map(|e| format!("{}", e.name().chars().take(3).collect::<String>()))
             .collect(),
-        months_num: distinct_months.iter().map(|e| e.month as u8).collect(),
+        months_num: distinct_months,
         max_vote: birds.iter().map(|e| e.1).max().unwrap_or(0) as u32,
         birds,
     };
 
-    if sel_year == now.year() {
+    if sel_year == now.year() - 1 && now.month() == 1 {
         Ok(Template::render("vote", &context))
     } else {
         Ok(Template::render("display", &context))
     }
-}
-
-#[get("/")]
-fn get_index() -> Redirect {
-    let year_now = Utc::now().year();
-    Redirect::to(format!("/{}", year_now))
 }
 
 #[get("/<sel_year>/<sel_month>")]
@@ -382,12 +279,8 @@ fn get_worstbird_month(
             .load(&*conn)
             .expect("Query failed");
 
-    let distinct_months: Vec<DistinctMonth> = diesel::sql_query(format!(
-        "select distinct month from worstbird_month where year = {}",
-        sel_year
-    ))
-    .load(&*conn)
-    .expect("month query failed");
+    let distinct_months: Vec<u32> = get_distinct_months(&conn, sel_year).unwrap();
+
     use worstbird_db::schema::bird::dsl::*;
     use worstbird_db::schema::worstbird_month::dsl::*;
 
@@ -414,10 +307,9 @@ fn get_worstbird_month(
         years: distinct_years.iter().map(|e| e.year).collect(),
         months: distinct_months
             .iter()
-            .map(|e| Month::from_u32(e.month as u32).unwrap())
-            .map(|e| format!("{}", e.name().chars().take(3).collect::<String>()))
+            .map(|e| month_to_shortmonth(*e))
             .collect(),
-        months_num: distinct_months.iter().map(|e| e.month as u8).collect(),
+        months_num: distinct_months,
         max_vote: birds.iter().map(|e| e.1).max().unwrap_or(0) as u32,
         birds,
     };
@@ -427,6 +319,37 @@ fn get_worstbird_month(
     } else {
         Ok(Template::render("display", &context))
     }
+}
+
+#[get("/")]
+fn get_index() -> Redirect {
+    let year_now = Utc::now().year();
+    Redirect::to(format!("/{}", year_now))
+}
+
+fn get_distinct_years(conn: &PgConnection) -> Result<Vec<i32>, Box<dyn std::error::Error>> {
+    let now = Utc::now();
+    let distinct_years: Vec<DistinctYear> =
+        diesel::sql_query("select distinct year from worstbird_year").load(&*conn)?;
+    let years: Vec<i32> = distinct_years.iter().map(|e| e.year).collect();
+    // if !years.contains(&now.year()) {
+    //     years.push(now.year());
+    //     years.sort();
+    // }
+    Ok(years)
+}
+
+fn get_distinct_months(
+    conn: &PgConnection,
+    year: i32,
+) -> Result<Vec<u32>, Box<dyn std::error::Error>> {
+    let distinct_months: Vec<DistinctMonth> = diesel::sql_query(format!(
+        "select distinct month from worstbird_month where year = {}",
+        year
+    ))
+    .load(&*conn)?;
+    let months: Vec<u32> = distinct_months.iter().map(|e| e.month as u32).collect();
+    Ok(months)
 }
 
 #[database("pg_worstbird")]
