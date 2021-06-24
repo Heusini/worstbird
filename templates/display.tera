@@ -38,8 +38,14 @@
             {%- endif -%}
         </div>
 
-        {%- if birds|length == 0 -%}
-        <h2>There are no Worstbirds you can vote for</h2>
+        {%- if birds|length == 0 and not sel_month -%}
+        <h2>There is no worstbird of {{ sel_year }}.</h2>
+        <a>Vote in January for the Worstbird of the Year.</a>
+        <br>
+        <a>Select a month to view previous worstbirds or select the current month to vote</a>
+        {%- elif birds|length == 0 -%}
+        <h2>There is no worstbird of {{ sel_month }} {{ sel_year }}.</h2>
+        <a>Select another month to vote or view Worstbirds</a>
         {%- else -%}
         <h2>Worstbirds of {{ sel_year }}</h2>
         <div id="worstbirds">
