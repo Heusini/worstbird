@@ -39,7 +39,7 @@
         </div>
 
         {%- if birds|length == 0 -%}
-        <h2>There was no Worstbird crowned for this Year</h2>
+        <h2>There are no Worstbirds you can vote for</h2>
         {%- else -%}
         <div id="votebirds">
             <h2>Vote for the Worstbird {{ sel_month }} {{ sel_year }}</h2>
