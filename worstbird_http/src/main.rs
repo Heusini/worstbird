@@ -274,10 +274,8 @@ fn get_worstbird_month(
     check_month(sel_month)?;
 
     let now = Utc::now();
-    let distinct_years: Vec<DistinctYear> =
-        diesel::sql_query("select distinct year from worstbird_year")
-            .load(&*conn)
-            .expect("Query failed");
+    let mut distinct_years = get_distinct_years(&conn)?;
+    distinct_years.push(now.year());
 
     let distinct_months: Vec<u32> = get_distinct_months(&conn, sel_year).unwrap();
 
@@ -304,7 +302,7 @@ fn get_worstbird_month(
                 .collect::<String>()
         )),
         sel_month_path: Some(format!("/{}", sel_month)),
-        years: distinct_years.iter().map(|e| e.year).collect(),
+        years: distinct_years,
         months: distinct_months
             .iter()
             .map(|e| month_to_shortmonth(*e))
@@ -328,14 +326,9 @@ fn get_index() -> Redirect {
 }
 
 fn get_distinct_years(conn: &PgConnection) -> Result<Vec<i32>, Box<dyn std::error::Error>> {
-    let now = Utc::now();
     let distinct_years: Vec<DistinctYear> =
         diesel::sql_query("select distinct year from worstbird_year").load(&*conn)?;
     let years: Vec<i32> = distinct_years.iter().map(|e| e.year).collect();
-    // if !years.contains(&now.year()) {
-    //     years.push(now.year());
-    //     years.sort();
-    // }
     Ok(years)
 }
 
