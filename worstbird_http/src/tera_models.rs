@@ -17,7 +17,7 @@ pub struct TeraTemplate {
     pub sel_month_path: Option<String>,
     pub years: Vec<i32>,
     pub months: Vec<String>,
-    pub months_num: Vec<u8>,
+    pub months_num: Vec<u32>,
     pub birds: Vec<(models::Bird, i32)>,
     pub max_vote: u32,
 }
