@@ -1,0 +1,13 @@
+FROM rustlang/rust:nightly
+WORKDIR /app
+RUN mkdir -p ./migrations
+COPY ./worstbird_db/migrations ./migrations
+RUN echo "DATABASE_URL=postgres://admin:SuperSecure@worstbird_db:5432/worstbird" > ./.env
+
+ENV WAIT_VERSION 2.7.2
+ADD https://github.com/ufoscout/docker-compose-wait/releases/download/$WAIT_VERSION/wait /wait
+RUN chmod +x /wait
+RUN apt-get update -qq && \
+    rm -rf /var/lib/apt/lists/* && \
+    cargo install diesel_cli
+CMD ["diesel"]
