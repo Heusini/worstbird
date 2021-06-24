@@ -35,6 +35,8 @@ fn get_new_bird() -> Result<BirdEntry> {
     let description = get_description(&data);
     let embed_id = get_embbed(&data);
 
+    println!("{:?}, {:?}, {:?}", name, embed_id, description);
+
     if embed_id.is_ok() && name.is_ok() && description.is_ok() {
         if let Ok((width, height)) = get_image_size(&embed_id.as_ref().unwrap()) {
             let bird = BirdEntry {
@@ -96,9 +98,7 @@ fn new_month_create(con: &PgConnection) {
 
 fn new_year_create(con: &PgConnection) {
     use worstbird_db::schema::worstbird_month::dsl::*;
-    let mut now = Utc::now();
-    now = now.with_year(2022).unwrap();
-    println!("{:?}", now);
+    let now = Utc::now();
     let worst_birds: Vec<models::WBMonth> = worstbird_month
         .filter(year.eq(now.year() - 1 as i32))
         .load::<models::WBMonth>(con)
