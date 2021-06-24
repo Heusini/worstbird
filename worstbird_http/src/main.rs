@@ -166,7 +166,7 @@ fn downvote_year(
 
     if get_ip_vote_count(state, remote_addr) >= MAX_IP_VOTE {
         let error_message = format!(
-            "You cannot downvote again as your ip exceeded the year's maximum of {}",
+            "You cannot downvote again as your ip exceeded the month's maximum of {}",
             MAX_IP_VOTE
         );
         context.error_message = Some(error_message);
@@ -301,9 +301,15 @@ fn check_month(month: u32) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn get_years(conn: &PgConnection) -> Result<Vec<i32>, Box<dyn std::error::Error>> {
+    let now = Utc::now();
     let distinct_years: Vec<DistinctYear> =
         diesel::sql_query("select distinct year from worstbird_year").load(&*conn)?;
-    Ok(distinct_years.iter().map(|e| e.year).collect())
+    let mut years: Vec<i32> = distinct_years.iter().map(|e| e.year).collect();
+    if !years.contains(&now.year()) {
+        years.push(now.year());
+        years.sort();
+    }
+    Ok(years)
 }
 
 // implement
@@ -344,9 +350,10 @@ fn get_worstbird_year(
             .map(|e| format!("{}", e.name().chars().take(3).collect::<String>()))
             .collect(),
         months_num: distinct_months.iter().map(|e| e.month as u8).collect(),
-        max_vote: birds.iter().map(|e| e.1).max().unwrap() as u32,
+        max_vote: birds.iter().map(|e| e.1).max().unwrap_or(0) as u32,
         birds,
     };
+
     if sel_year == now.year() {
         Ok(Template::render("vote", &context))
     } else {
@@ -411,7 +418,7 @@ fn get_worstbird_month(
             .map(|e| format!("{}", e.name().chars().take(3).collect::<String>()))
             .collect(),
         months_num: distinct_months.iter().map(|e| e.month as u8).collect(),
-        max_vote: birds.iter().map(|e| e.1).max().unwrap() as u32,
+        max_vote: birds.iter().map(|e| e.1).max().unwrap_or(0) as u32,
         birds,
     };
 
