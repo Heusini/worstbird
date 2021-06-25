@@ -57,10 +57,10 @@ fn get_new_bird() -> Result<BirdEntry> {
     }
 }
 
-fn establish_connection() -> PgConnection {
+fn establish_connection() -> Result<PgConnection> {
     dotenv().ok();
     let database_url = env::var("DATABASE_URL").expect("No DATABASE_URL");
-    PgConnection::establish(&database_url).expect(&format!("Error connectiong to {}", database_url))
+    Ok(PgConnection::establish(&database_url)?)
 }
 
 fn new_month_create(con: &PgConnection) {
@@ -125,30 +125,30 @@ fn new_year_create(con: &PgConnection) {
 }
 
 fn main() -> ! {
-    // println!("{:?}", calc_time_end_of_month());
-    // println!("{:?}", create_new_birds(5));
-
     use worstbird_db::schema::worstbird_month::dsl::*;
-    println!("{:?}", get_image_size("39765651"));
     loop {
         let now = Utc::now();
-        println!("Executing {:?}", now);
-        let connection = establish_connection();
-        let results = worstbird_month
-            .filter(month.eq(now.month() as i32))
-            .filter(year.eq(now.year() as i32))
-            .limit(1)
-            .load::<models::WBMonth>(&connection)
-            .unwrap();
-        if results.len() == 0 {
-            new_month_create(&connection);
+        if let Ok(connection) = establish_connection() {
+            println!("Executing {:?}", now);
+            let results = worstbird_month
+                .filter(month.eq(now.month() as i32))
+                .filter(year.eq(now.year() as i32))
+                .limit(1)
+                .load::<models::WBMonth>(&connection)
+                .unwrap();
+            if results.len() == 0 {
+                new_month_create(&connection);
+            }
+            if now.month() == 1 {
+                new_year_create(&connection);
+            }
+            let wait_time = calc_time_to_end_of_month();
+            println!("Waiting for next call in {:?}", wait_time);
+            std::thread::sleep(wait_time);
+        } else {
+            println!("Couldn't connect to database");
+            std::thread::sleep(Duration::from_secs(30_u64));
         }
-        if now.month() == 6 {
-            new_year_create(&connection);
-        }
-        let wait_time = calc_time_to_end_of_month();
-        println!("Waiting for next call in {:?}", wait_time);
-        std::thread::sleep(wait_time);
 
         // check if create new month
         // if true
