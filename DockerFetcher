@@ -4,8 +4,6 @@ FROM rustlang/rust:nightly as build
 RUN USER=root cargo new --bin worstbird
 WORKDIR /worstbird
 
-RUN rustup target add x86_64-unknown-linux-musl
-
 # copy over your manifests
 COPY ./Cargo.lock ./Cargo.lock
 
