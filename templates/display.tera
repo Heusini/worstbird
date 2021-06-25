@@ -26,7 +26,7 @@
             {%- else -%}
             {%- for year in years -%}
             <div class="sub_menu">
-                <a href="/{{ sel_year }}">{{ sel_year }}</a>
+                <a href="/{{ year }}">{{ year }}</a>
                 {%- if year == sel_year -%}
                 <ul>
                     {%- for month in months -%}
@@ -54,7 +54,7 @@
             {%- if bird.1 == max_vote -%}
             <div class="bird">
                 <h4>{{ bird.0.name }}</h4>
-                <iframe width="{{ bird.0.width}}" height="{{ bird.0.height + 130 }}"
+                <iframe width="{{ bird.0.width}}" height="{{ bird.0.height + 132 }}"
                     src="https://macaulaylibrary.org/asset/{{ bird.0.assetid }}/embed/320" frameborder="0"
                     allowfullscreen style="width:320px;"></iframe>
                 <div class="text" onclick=expand(this)>
@@ -73,7 +73,7 @@
             {%- if bird.1 != max_vote -%}
             <div class="bird">
                 <h4>{{ bird.0.name }}</h4>
-                <iframe width="{{ bird.0.width }}" height="{{ bird.0.height + 130 }}"
+                <iframe width="{{ bird.0.width }}" height="{{ bird.0.height + 132 }}"
                     src="https://macaulaylibrary.org/asset/{{ bird.0.assetid }}/embed/320" frameborder="0"
                     allowfullscreen style="width:320px;"></iframe>
                 <div class="text" onclick=expand(this)>
