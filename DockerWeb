@@ -3,6 +3,7 @@ FROM rustlang/rust:nightly as build
 # create a new empty shell project
 RUN USER=root cargo new --bin worstbird
 WORKDIR /worstbird
+RUN rustup target add x86_64-unknown-linux-musl
 
 
 # copy over your manifests
@@ -23,23 +24,18 @@ RUN mkdir -p ./templates
 COPY ./templates ./templates
 
 # build for release
-RUN rm ./target/release/deps/worstbird*
 RUN cargo build --release -p worstbird_http
 
 
-FROM rustlang/rust:nightly
+FROM debian:buster-slim
 
+RUN apt-get update \
+    && apt-get -y install libpq-dev gcc
 COPY --from=build /worstbird/target/release/worstbird_http .
 
 #RUN mkdir -p ./www
 #COPY ./www ./www
 RUN mkdir -p ./templates
 COPY ./templates ./templates
-
-# Add docker-compose-wait tool -------------------
-ENV WAIT_VERSION 2.7.2
-ADD https://github.com/ufoscout/docker-compose-wait/releases/download/$WAIT_VERSION/wait /wait
-RUN chmod +x /wait
-
 
 CMD ["./worstbird_http"]
