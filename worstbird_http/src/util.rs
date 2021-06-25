@@ -32,7 +32,7 @@ pub fn set_cookie(
     cookies: &mut Cookies,
     bird_id: u32,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let expire_date = get_expire_date();
+    let expire_date = get_expire_date().to_rfc2822();
     let cookie_str = format!("{}={}; Expires={}", key, bird_id, expire_date);
     let mut cookie = Cookie::parse(cookie_str)?;
     cookie.set_secure(false);
