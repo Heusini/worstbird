@@ -353,9 +353,11 @@ fn get_distinct_months(
 struct PgDatabase(diesel::PgConnection);
 fn main() {
     dotenv().ok();
-
+    eprintln!("Initialized environment");
     let ip_map: CHashMap<IpAddr, UserVoteCount> = CHashMap::new();
+    eprintln!("Initialized hashmap");
 
+    eprintln!("Starting Webserver");
     rocket::ignite()
         .attach(Template::fairing())
         .attach(PgDatabase::fairing())
