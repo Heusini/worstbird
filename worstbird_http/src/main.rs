@@ -227,7 +227,7 @@ fn get_worstbird_year(
     sel_year: i32,
 ) -> Result<Template, Box<dyn std::error::Error>> {
     check_year(sel_year)?;
-    let now = Utc::now();
+    let now = Local::now();
     let mut distinct_years = get_distinct_years(&*conn)?;
     distinct_years.push(now.year());
 
@@ -273,7 +273,7 @@ fn get_worstbird_month(
     check_year(sel_year)?;
     check_month(sel_month)?;
 
-    let now = Utc::now();
+    let now = Local::now();
     let mut distinct_years = get_distinct_years(&conn)?;
     distinct_years.push(now.year());
 
@@ -321,8 +321,12 @@ fn get_worstbird_month(
 
 #[get("/")]
 fn get_index() -> Redirect {
-    let year_now = Utc::now().year();
-    Redirect::to(format!("/{}", year_now))
+    let now = Local::now();
+    if now.month() == 1 {
+        Redirect::to(format!("/{}", now.year()))
+    } else {
+        Redirect::to(format!("/{}/{}", now.year(), now.month()))
+    }
 }
 
 fn get_distinct_years(conn: &PgConnection) -> Result<Vec<i32>, Box<dyn std::error::Error>> {
