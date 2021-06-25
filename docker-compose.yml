@@ -11,7 +11,7 @@ services:
           - worstbird_db
           # - proxy
           # - letsencrypt
-          - diesel_setup
+          # - diesel_setup
       container_name: worstbird_web
       networks:
         - worstbird_prod
@@ -26,14 +26,14 @@ services:
         - WAIT_HOSTS_TIMEOUT=300
         - WAIT_SLEEP_INTERVAL=30
         - WAIT_HOST_CONNECT_TIMEOUT=30
-      command: sh -c "/wait && ./worstbird_http"
+      command: ./worstbird_http
   worstbird_fetcher:
       build: 
         context: .
         dockerfile: DockerFetcher
       depends_on:
           - worstbird_db
-          - diesel_setup
+          # - diesel_setup
       container_name: worstbird_fetcher
       networks:
         - worstbird_prod
@@ -43,21 +43,21 @@ services:
         - WAIT_HOSTS_TIMEOUT=300
         - WAIT_SLEEP_INTERVAL=30
         - WAIT_HOST_CONNECT_TIMEOUT=30
-      command: sh -c "/wait && ./worstbird_fetcher"
-  diesel_setup:
-      build:
-        context: .
-        dockerfile: DockerDiesel
-      depends_on:
-        - worstbird_db
-      networks:
-        - worstbird_prod
-      environment:
-        - WAIT_HOSTS=worstbird_db:5432
-        - WAIT_HOSTS_TIMEOUT=300
-        - WAIT_SLEEP_INTERVAL=30
-        - WAIT_HOST_CONNECT_TIMEOUT=30
-      command: sh -c "/wait && diesel database setup && diesel migration run"
+      command: ./worstbird_fetcher
+  # diesel_setup:
+  #     build:
+  #       context: .
+  #       dockerfile: DockerDiesel
+  #     depends_on:
+  #       - worstbird_db
+  #     networks:
+  #       - worstbird_prod
+  #     environment:
+  #       - WAIT_HOSTS=worstbird_db:5432
+  #       - WAIT_HOSTS_TIMEOUT=300
+  #       - WAIT_SLEEP_INTERVAL=30
+  #       - WAIT_HOST_CONNECT_TIMEOUT=30
+  #     command: sh -c "/wait && diesel database setup && diesel migration run"
 
 
   worstbird_db:
