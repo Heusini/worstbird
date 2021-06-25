@@ -6,6 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="/www/index.css" rel="stylesheet" type="text/css" />
+    <script src="/www/expand.js"></script>
     <title>Worstbird</title>
 </head>
 
@@ -39,12 +40,12 @@
         </div>
 
         {%- if birds|length == 0 and not sel_month -%}
-        <h2>There is no worstbird of {{ sel_year }}.</h2>
+        <h2>There is no Worstbird for the year {{ sel_year }}.</h2>
         <a>Vote in January for the Worstbird of the Year.</a>
         <br>
-        <a>Select a month to view previous worstbirds or select the current month to vote</a>
+        <a>Select a month to view previous Worstbirds or select the current month to vote</a>
         {%- elif birds|length == 0 -%}
-        <h2>There is no worstbird of {{ sel_month }} {{ sel_year }}.</h2>
+        <h2>There is no Worstbird of {{ sel_month }} {{ sel_year }}.</h2>
         <a>Select another month to vote or view Worstbirds</a>
         {%- else -%}
         <h2>Worstbirds of {{ sel_year }}</h2>
@@ -56,7 +57,7 @@
                 <iframe width="{{ bird.0.width}}" height="{{ bird.0.height + 130 }}"
                     src="https://macaulaylibrary.org/asset/{{ bird.0.assetid }}/embed/320" frameborder="0"
                     allowfullscreen style="width:320px;"></iframe>
-                <div class="text">
+                <div class="text" onclick=expand(this)>
                     <p>{{ bird.0.description }}</p>
                 </div>
                 <div>
@@ -75,7 +76,7 @@
                 <iframe width="{{ bird.0.width }}" height="{{ bird.0.height + 130 }}"
                     src="https://macaulaylibrary.org/asset/{{ bird.0.assetid }}/embed/320" frameborder="0"
                     allowfullscreen style="width:320px;"></iframe>
-                <div class="text">
+                <div class="text" onclick=expand(this)>
                     <p>{{ bird.0.description }}</p>
                 </div>
                 <div>
