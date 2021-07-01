@@ -241,8 +241,7 @@ fn get_worstbird_year(
         .filter(year.eq(sel_year as i32))
         .inner_join(bird)
         .select(((id, name, description, assetid, url, width, height), votes))
-        .load(&*conn)
-        .expect("error");
+        .load(&*conn)?;
 
     let context = TeraTemplate {
         sel_year,
@@ -289,8 +288,7 @@ fn get_worstbird_month(
         .filter(month.eq(sel_month as i32))
         .inner_join(bird)
         .select(((id, name, description, assetid, url, width, height), votes))
-        .load(&*conn)
-        .expect("error");
+        .load(&*conn)?;
 
     let context = TeraTemplate {
         sel_year,
