@@ -84,38 +84,40 @@ fn downvote_year(
     let now = Local::now();
     check_year(sel_year)?;
 
-    if now.year() - 1 != sel_year && now.month() != 1 {
-        return Err("Not allowed to vote this month".into());
-    }
-    use worstbird_db::schema::worstbird_year::dsl::*;
+    if now.year() - 1 == sel_year && now.month() == 1 {
+        use worstbird_db::schema::worstbird_year::dsl::*;
 
-    let wb_year: models::WBYear = diesel::update(worstbird_year.find((birdid as i32, sel_year)))
-        .set(votes.eq(votes + 1))
-        .get_result(&*conn)?;
+        let wb_year: models::WBYear =
+            diesel::update(worstbird_year.find((birdid as i32, sel_year)))
+                .set(votes.eq(votes + 1))
+                .get_result(&*conn)?;
 
-    use worstbird_db::schema::bird::dsl::*;
-    let my_bird = bird.filter(id.eq(wb_year.bird_id)).get_result(&*conn)?;
+        use worstbird_db::schema::bird::dsl::*;
+        let my_bird = bird.filter(id.eq(wb_year.bird_id)).get_result(&*conn)?;
 
-    let mut context = TeraDownVote {
-        bird: my_bird,
-        votes: wb_year.votes,
-        referer: format!("/{}", sel_year),
-        error_message: None,
-        month: None,
-        year: Some(sel_year),
-    };
+        let mut context = TeraDownVote {
+            bird: my_bird,
+            votes: wb_year.votes,
+            referer: format!("/{}", sel_year),
+            error_message: None,
+            month: None,
+            year: Some(sel_year),
+        };
 
-    set_cookie("year", &mut cookies, birdid)?;
+        set_cookie("year", &mut cookies, birdid)?;
 
-    if get_ip_vote_count(state, remote_addr) >= MAX_IP_VOTE {
-        let error_message = format!(
-            "You cannot downvote again as your ip exceeded the month's maximum of {}",
-            MAX_IP_VOTE
-        );
-        context.error_message = Some(error_message);
-        Ok(Template::render("already_downvoted", &context))
+        if get_ip_vote_count(state, remote_addr) >= MAX_IP_VOTE {
+            let error_message = format!(
+                "You cannot downvote again as your ip exceeded the month's maximum of {}",
+                MAX_IP_VOTE
+            );
+            context.error_message = Some(error_message);
+            Ok(Template::render("already_downvoted", &context))
+        } else {
+            Ok(Template::render("downvoted", &context))
+        }
     } else {
-        Ok(Template::render("downvoted", &context))
+        return Err("Not allowed to vote this month".into());
     }
 }
 
@@ -176,45 +178,45 @@ fn downvote_month(
     check_month(sel_month)?;
 
     let now = Local::now();
-    if now.year() != sel_year && now.month() != sel_month {
-        return Err("Voting for this month is not allowed".into());
-    }
+    if now.year() == sel_year && now.month() == sel_month {
+        use worstbird_db::schema::worstbird_month::dsl::*;
 
-    use worstbird_db::schema::worstbird_month::dsl::*;
+        let wb_month: models::WBMonth =
+            diesel::update(worstbird_month.find((birdid as i32, sel_month as i32, sel_year)))
+                .set(votes.eq(votes + 1))
+                .get_result(&*conn)?;
 
-    let wb_month: models::WBMonth =
-        diesel::update(worstbird_month.find((birdid as i32, sel_month as i32, sel_year)))
-            .set(votes.eq(votes + 1))
-            .get_result(&*conn)?;
+        use worstbird_db::schema::bird::dsl::*;
+        let my_bird = bird.filter(id.eq(wb_month.bird_id)).get_result(&*conn)?;
 
-    use worstbird_db::schema::bird::dsl::*;
-    let my_bird = bird.filter(id.eq(wb_month.bird_id)).get_result(&*conn)?;
+        let mut context = TeraDownVote {
+            bird: my_bird,
+            votes: wb_month.votes,
+            referer: format!("/{}/{}", sel_year, sel_month),
+            error_message: None,
+            month: Some(
+                Month::from_u32(sel_month)
+                    .ok_or("Error could not convert month num to enum chrono::Month")?
+                    .name()
+                    .to_string(),
+            ),
+            year: Some(sel_year),
+        };
 
-    let mut context = TeraDownVote {
-        bird: my_bird,
-        votes: wb_month.votes,
-        referer: format!("/{}/{}", sel_year, sel_month),
-        error_message: None,
-        month: Some(
-            Month::from_u32(sel_month)
-                .ok_or("Error could not convert month num to enum chrono::Month")?
-                .name()
-                .to_string(),
-        ),
-        year: Some(sel_year),
-    };
+        set_cookie("month", &mut cookies, birdid)?;
 
-    set_cookie("month", &mut cookies, birdid)?;
-
-    if get_ip_vote_count(state, remote_addr) >= MAX_IP_VOTE {
-        let error_message = format!(
-            "You cannot downvote again as your ip exceeded the month's maximum of {}",
-            MAX_IP_VOTE
-        );
-        context.error_message = Some(error_message);
-        Ok(Template::render("already_downvoted", &context))
+        if get_ip_vote_count(state, remote_addr) >= MAX_IP_VOTE {
+            let error_message = format!(
+                "You cannot downvote again as your ip exceeded the month's maximum of {}",
+                MAX_IP_VOTE
+            );
+            context.error_message = Some(error_message);
+            Ok(Template::render("already_downvoted", &context))
+        } else {
+            Ok(Template::render("downvoted", &context))
+        }
     } else {
-        Ok(Template::render("downvoted", &context))
+        return Err("Voting for this month is not allowed".into());
     }
 }
 
@@ -277,7 +279,7 @@ fn get_worstbird_month(
     let mut distinct_years = get_distinct_years(&conn)?;
     distinct_years.push(now.year());
 
-    let distinct_months: Vec<u32> = get_distinct_months(&conn, sel_year).unwrap();
+    let distinct_months: Vec<u32> = get_distinct_months(&conn, sel_year)?;
 
     use worstbird_db::schema::bird::dsl::*;
     use worstbird_db::schema::worstbird_month::dsl::*;
@@ -323,7 +325,7 @@ fn get_worstbird_month(
 fn get_index() -> Redirect {
     let now = Local::now();
     if now.month() == 1 {
-        Redirect::to(format!("/{}", now.year()))
+        Redirect::to(format!("/{}", now.year() - 1))
     } else {
         Redirect::to(format!("/{}/{}", now.year(), now.month()))
     }
