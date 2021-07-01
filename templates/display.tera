@@ -48,7 +48,7 @@
         <h2>There is no Worstbird of {{ sel_month }} {{ sel_year }}.</h2>
         <a>Select another month to vote or view Worstbirds</a>
         {%- else -%}
-        <h2>Worstbirds of {{ sel_year }}</h2>
+        <h2>Worstbird(s) of {{ sel_month }} {{ sel_year }}</h2>
         <div id="worstbirds">
             {%- for bird in birds -%}
             {%- if bird.1 == max_vote -%}
@@ -67,7 +67,7 @@
             {%- endif -%}
             {%- endfor -%}
         </div>
-        <h2>Other birds voted for this year {{ sel_year }}</h2>
+        <h2>Other birds voted for in {{ sel_month }} {{ sel_year }}</h2>
         <div id="birds">
             {%- for bird in birds -%}
             {%- if bird.1 != max_vote -%}
