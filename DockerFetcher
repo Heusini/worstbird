@@ -17,9 +17,6 @@ COPY ./worstbird_db ./worstbird_db
 COPY ./worstbird_fetcher ./worstbird_fetcher
 RUN ls target/release/deps/
 
-# copy your source tree
-RUN mkdir -p ./templates
-COPY ./templates ./templates
 
 # build for release
 RUN cargo build --release -p worstbird_fetcher
