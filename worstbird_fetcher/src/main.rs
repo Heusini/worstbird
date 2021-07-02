@@ -105,21 +105,34 @@ fn new_year_create(con: &PgConnection) {
         .unwrap();
 
     for i in 1..=12 {
-        if let Some(worstbird) = worst_birds
+        if let Some(max_vote) = worst_birds
             .iter()
             .filter(|e| e.month == i)
-            .max_by_key(|e| e.votes)
+            .map(|e| e.votes)
+            .max()
         {
-            println!("{:?}", worstbird);
-            use worstbird_db::schema::worstbird_year::dsl::*;
-            diesel::insert_into(worstbird_year)
-                .values(models::WBYear {
-                    bird_id: worstbird.bird_id,
-                    year: now.year() - 1,
-                    votes: 0,
-                })
-                .execute(con)
-                .unwrap();
+            let worstbird: Vec<&models::WBMonth> = worst_birds
+                .iter()
+                .filter(|e| e.month == i)
+                .filter(|e| e.votes == max_vote)
+                .collect();
+            for wb in &worstbird {
+                use worstbird_db::schema::worstbird_year::dsl::*;
+                match diesel::insert_into(worstbird_year)
+                    .values(models::WBYear {
+                        bird_id: wb.bird_id,
+                        year: now.year() - 1,
+                        votes: 0,
+                    })
+                    .execute(con)
+                {
+                    Ok(_) => eprintln!("Added worstbird {:?} to database", &wb),
+                    Err(e) => eprintln!(
+                        "Could not add worstbird {:?} to database for reaseon: {:?}",
+                        &wb, e
+                    ),
+                }
+            }
         }
     }
 }
