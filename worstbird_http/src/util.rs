@@ -1,6 +1,6 @@
-use chashmap::CHashMap;
 use chrono::prelude::*;
 use chrono::Month;
+use dashmap::DashMap;
 use diesel::sql_types::Integer;
 use num_traits::FromPrimitive;
 use rocket::http::{Cookie, Cookies};
@@ -67,21 +67,23 @@ pub fn get_expire_date() -> DateTime<Local> {
 }
 
 pub fn get_ip_vote_count(
-    state: State<CHashMap<IpAddr, UserVoteCount>>,
+    state: State<DashMap<IpAddr, UserVoteCount>>,
     remote_addr: SocketAddr,
 ) -> u32 {
-    state.inner().upsert(
-        remote_addr.ip(),
-        || UserVoteCount {
-            count: 1,
-            expiration: get_expire_date(),
-        },
-        |e| e.count += 1,
-    );
+    if let Some(mut entry) = state.get_mut(&remote_addr.ip()) {
+        if entry.expiration < Local::now() {
+            entry.count = 1;
+            entry.expiration = get_expire_date();
+        }
+        if entry.count > MAX_IP_VOTE {
+            return entry.count;
+        } else {
+            entry.count += 1;
+        }
 
-    let user_vote = state.inner().get(&remote_addr.ip()).unwrap();
-    if user_vote.expiration < Local::now() {
-        state.inner().insert(
+        return entry.count;
+    } else {
+        state.insert(
             remote_addr.ip(),
             UserVoteCount {
                 count: 1,
@@ -89,11 +91,6 @@ pub fn get_ip_vote_count(
             },
         );
         1
-    } else {
-        println!("{}", user_vote.count);
-        println!("{}", remote_addr);
-        println!("{:?}", state.inner());
-        user_vote.count
     }
 }
 pub fn check_year(year: i32) -> Result<(), Box<dyn std::error::Error>> {

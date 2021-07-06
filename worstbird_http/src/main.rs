@@ -29,7 +29,7 @@ use rocket::State;
 use rocket_contrib::serve::StaticFiles;
 use rocket_contrib::templates::Template;
 
-use chashmap::CHashMap;
+use dashmap::DashMap;
 
 use crate::session::{MonthCookie, YearCookie};
 use crate::util::*;
@@ -74,7 +74,7 @@ fn downvote_year_user(
 
 #[get("/downvote/<birdid>/<sel_year>", rank = 2)]
 fn downvote_year(
-    state: State<CHashMap<IpAddr, UserVoteCount>>,
+    state: State<DashMap<IpAddr, UserVoteCount>>,
     remote_addr: SocketAddr,
     conn: PgDatabase,
     mut cookies: Cookies,
@@ -85,27 +85,22 @@ fn downvote_year(
     check_year(sel_year)?;
 
     if now.year() - 1 == sel_year && now.month() == 1 {
-        use worstbird_db::schema::worstbird_year::dsl::*;
-
-        let wb_year: models::WBYear =
-            diesel::update(worstbird_year.find((birdid as i32, sel_year)))
-                .set(votes.eq(votes + 1))
-                .get_result(&*conn)?;
-
         use worstbird_db::schema::bird::dsl::*;
-        let my_bird = bird.filter(id.eq(wb_year.bird_id)).get_result(&*conn)?;
+        use worstbird_db::schema::worstbird_year::dsl::*;
+        let my_bird: (models::Bird, i32) = worstbird_year
+            .filter(bird_id.eq(birdid as i32))
+            .inner_join(bird)
+            .select(((id, name, description, assetid, url, width, height), votes))
+            .get_result(&*conn)?;
 
         let mut context = TeraDownVote {
-            bird: my_bird,
-            votes: wb_year.votes,
+            bird: my_bird.0,
+            votes: my_bird.1,
             referer: format!("/{}", sel_year),
             error_message: None,
             month: None,
             year: Some(sel_year),
         };
-
-        set_cookie("year", &mut cookies, birdid)?;
-
         if get_ip_vote_count(state, remote_addr) >= MAX_IP_VOTE {
             let error_message = format!(
                 "You cannot downvote again as your ip exceeded the month's maximum of {}",
@@ -114,6 +109,13 @@ fn downvote_year(
             context.error_message = Some(error_message);
             Ok(Template::render("already_downvoted", &context))
         } else {
+            let wb_year: models::WBYear =
+                diesel::update(worstbird_year.find((birdid as i32, sel_year)))
+                    .set(votes.eq(votes + 1))
+                    .get_result(&*conn)?;
+            context.votes = wb_year.votes;
+
+            set_cookie("year", &mut cookies, birdid)?;
             Ok(Template::render("downvoted", &context))
         }
     } else {
@@ -166,7 +168,7 @@ fn downvote_month_user(
 
 #[get("/downvote/<birdid>/<sel_year>/<sel_month>", rank = 2)]
 fn downvote_month(
-    state: State<CHashMap<IpAddr, UserVoteCount>>,
+    state: State<DashMap<IpAddr, UserVoteCount>>,
     remote_addr: SocketAddr,
     conn: PgDatabase,
     mut cookies: Cookies,
@@ -179,19 +181,17 @@ fn downvote_month(
 
     let now = Local::now();
     if now.year() == sel_year && now.month() == sel_month {
-        use worstbird_db::schema::worstbird_month::dsl::*;
-
-        let wb_month: models::WBMonth =
-            diesel::update(worstbird_month.find((birdid as i32, sel_month as i32, sel_year)))
-                .set(votes.eq(votes + 1))
-                .get_result(&*conn)?;
-
         use worstbird_db::schema::bird::dsl::*;
-        let my_bird = bird.filter(id.eq(wb_month.bird_id)).get_result(&*conn)?;
+        use worstbird_db::schema::worstbird_month::dsl::*;
+        let my_bird: (models::Bird, i32) = worstbird_month
+            .filter(bird_id.eq(birdid as i32))
+            .inner_join(bird)
+            .select(((id, name, description, assetid, url, width, height), votes))
+            .get_result(&*conn)?;
 
         let mut context = TeraDownVote {
-            bird: my_bird,
-            votes: wb_month.votes,
+            bird: my_bird.0,
+            votes: my_bird.1,
             referer: format!("/{}/{}", sel_year, sel_month),
             error_message: None,
             month: Some(
@@ -203,8 +203,6 @@ fn downvote_month(
             year: Some(sel_year),
         };
 
-        set_cookie("month", &mut cookies, birdid)?;
-
         if get_ip_vote_count(state, remote_addr) >= MAX_IP_VOTE {
             let error_message = format!(
                 "You cannot downvote again as your ip exceeded the month's maximum of {}",
@@ -213,6 +211,13 @@ fn downvote_month(
             context.error_message = Some(error_message);
             Ok(Template::render("already_downvoted", &context))
         } else {
+            let wb_month: models::WBMonth =
+                diesel::update(worstbird_month.find((birdid as i32, sel_month as i32, sel_year)))
+                    .set(votes.eq(votes + 1))
+                    .get_result(&*conn)?;
+
+            context.votes = wb_month.votes;
+            set_cookie("month", &mut cookies, birdid)?;
             Ok(Template::render("downvoted", &context))
         }
     } else {
@@ -354,7 +359,7 @@ struct PgDatabase(diesel::PgConnection);
 fn main() {
     dotenv().ok();
     eprintln!("Initialized environment");
-    let ip_map: CHashMap<IpAddr, UserVoteCount> = CHashMap::new();
+    let ip_map: DashMap<IpAddr, UserVoteCount> = DashMap::new();
     eprintln!("Initialized hashmap");
 
     eprintln!("Starting Webserver");
