@@ -4,12 +4,13 @@ extern crate rocket;
 #[macro_use]
 extern crate diesel;
 
+pub mod error;
 pub mod session;
 pub mod tera_models;
 pub mod util;
+
 extern crate dotenv;
 use dotenv::dotenv;
-use std::pin::Pin;
 
 use std::net::IpAddr;
 use std::net::SocketAddr;
@@ -21,19 +22,19 @@ use chrono::Month;
 use num_traits::FromPrimitive;
 
 use crate::tera_models::{TeraDownVote, TeraTemplate};
+use rocket::fs::FileServer;
 use rocket::http::CookieJar;
 use rocket::response::Redirect;
 use rocket::State;
 
-use rocket_contrib::serve::StaticFiles;
 // use rocket_contrib::templates::Template;
 
-use rocket::response::status::NotFound;
 use rocket_dyn_templates::Template;
-use rocket_sync_db_pools::{database, postgres};
+use rocket_sync_db_pools::database;
 
 use dashmap::DashMap;
 
+use crate::error::CustomError;
 use crate::session::{MonthCookie, YearCookie};
 use crate::util::*;
 use worstbird_db::models;
@@ -44,24 +45,27 @@ async fn downvote_year_user(
     conn: PgDatabase,
     sel_year: i32,
     birdid: u32,
-) -> Result<Template, String> {
+) -> Result<Template, CustomError> {
     use worstbird_db::schema::bird::dsl::*;
     use worstbird_db::schema::worstbird_year::dsl::*;
 
     let downvoted_bird: (models::Bird, i32) = conn
-        .run(|c| {
+        .run(move |c| {
             worstbird_year
                 .filter(bird_id.eq(birdid as i32))
                 .inner_join(bird)
                 .select(((id, name, description, assetid, url, width, height), votes))
                 .get_result(c)
         })
-        .await;
+        .await?;
 
-    let previously_downvoted: String = bird
-        .filter(id.eq(year_cookie.0 as i32))
-        .select(name)
-        .get_result(&*conn)?;
+    let previously_downvoted: String = conn
+        .run(move |c| {
+            bird.filter(id.eq(year_cookie.0 as i32))
+                .select(name)
+                .get_result(c)
+        })
+        .await?;
 
     let error_message = format!(
         "You cannot downvote again as you already voted for {} in {}",
@@ -81,14 +85,14 @@ async fn downvote_year_user(
 }
 
 #[get("/downvote/<birdid>/<sel_year>", rank = 2)]
-fn downvote_year(
-    state: State<DashMap<IpAddr, UserVoteCount>>,
+async fn downvote_year(
+    state: &State<DashMap<IpAddr, UserVoteCount>>,
     remote_addr: SocketAddr,
     conn: PgDatabase,
-    mut cookies: CookieJar,
+    cookies: &CookieJar<'_>,
     sel_year: i32,
     birdid: u32,
-) -> Result<Template, Pin<Box<dyn std::error::Error>>> {
+) -> Result<Template, CustomError> {
     let now = Local::now();
     check_year(sel_year)?;
 
@@ -96,11 +100,15 @@ fn downvote_year(
         use worstbird_db::schema::bird::dsl::*;
         use worstbird_db::schema::worstbird_year::dsl::*;
 
-        let my_bird: (models::Bird, i32) = worstbird_year
-            .filter(bird_id.eq(birdid as i32))
-            .inner_join(bird)
-            .select(((id, name, description, assetid, url, width, height), votes))
-            .get_result(&conn)?;
+        let my_bird: (models::Bird, i32) = conn
+            .run(move |c| {
+                worstbird_year
+                    .filter(bird_id.eq(birdid as i32))
+                    .inner_join(bird)
+                    .select(((id, name, description, assetid, url, width, height), votes))
+                    .get_result(c)
+            })
+            .await?;
 
         let mut context = TeraDownVote {
             bird: my_bird.0,
@@ -118,13 +126,16 @@ fn downvote_year(
             context.error_message = Some(error_message);
             Ok(Template::render("already_downvoted", &context))
         } else {
-            let wb_year: models::WBYear =
-                diesel::update(worstbird_year.find((birdid as i32, sel_year)))
-                    .set(votes.eq(votes + 1))
-                    .get_result(&*conn)?;
+            let wb_year: models::WBYear = conn
+                .run(move |c| {
+                    diesel::update(worstbird_year.find((birdid as i32, sel_year)))
+                        .set(votes.eq(votes + 1))
+                        .get_result(c)
+                })
+                .await?;
             context.votes = wb_year.votes;
 
-            set_cookie("year", &mut cookies, birdid)?;
+            set_cookie("year", &cookies, birdid)?;
             Ok(Template::render("downvoted", &context))
         }
     } else {
@@ -133,27 +144,34 @@ fn downvote_year(
 }
 
 #[get("/downvote/<birdid>/<sel_year>/<sel_month>")]
-fn downvote_month_user(
+async fn downvote_month_user(
     month_cookie: MonthCookie,
     conn: PgDatabase,
     sel_year: i32,
     sel_month: u32,
     birdid: u32,
-) -> Result<Template, Box<dyn std::error::Error>> {
+) -> Result<Template, CustomError> {
     check_year(sel_year)?;
     check_month(sel_month)?;
     use worstbird_db::schema::bird::dsl::*;
     use worstbird_db::schema::worstbird_month::dsl::*;
-    let downvoted_bird: (models::Bird, i32) = worstbird_month
-        .filter(bird_id.eq(birdid as i32))
-        .inner_join(bird)
-        .select(((id, name, description, assetid, url, width, height), votes))
-        .get_result(&*conn)?;
+    let downvoted_bird: (models::Bird, i32) = conn
+        .run(move |c| {
+            worstbird_month
+                .filter(bird_id.eq(birdid as i32))
+                .inner_join(bird)
+                .select(((id, name, description, assetid, url, width, height), votes))
+                .get_result(c)
+        })
+        .await?;
 
-    let previously_downvoted: String = bird
-        .filter(id.eq(month_cookie.0 as i32))
-        .select(name)
-        .get_result(&*conn)?;
+    let previously_downvoted: String = conn
+        .run(move |c| {
+            bird.filter(id.eq(month_cookie.0 as i32))
+                .select(name)
+                .get_result(c)
+        })
+        .await?;
 
     let month_name = Month::from_u32(sel_month)
         .ok_or("Error could not convert month num to enum chrono::Month")?
@@ -176,15 +194,15 @@ fn downvote_month_user(
 }
 
 #[get("/downvote/<birdid>/<sel_year>/<sel_month>", rank = 2)]
-fn downvote_month(
-    state: State<DashMap<IpAddr, UserVoteCount>>,
+async fn downvote_month(
+    state: &State<DashMap<IpAddr, UserVoteCount>>,
     remote_addr: SocketAddr,
     conn: PgDatabase,
-    mut cookies: CookieJar,
+    mut cookies: &CookieJar<'_>,
     sel_year: i32,
     sel_month: u32,
     birdid: u32,
-) -> Result<Template, Box<dyn std::error::Error>> {
+) -> Result<Template, CustomError> {
     check_year(sel_year)?;
     check_month(sel_month)?;
 
@@ -192,11 +210,15 @@ fn downvote_month(
     if now.year() == sel_year && now.month() == sel_month {
         use worstbird_db::schema::bird::dsl::*;
         use worstbird_db::schema::worstbird_month::dsl::*;
-        let my_bird: (models::Bird, i32) = worstbird_month
-            .filter(bird_id.eq(birdid as i32))
-            .inner_join(bird)
-            .select(((id, name, description, assetid, url, width, height), votes))
-            .get_result(&*conn)?;
+        let my_bird: (models::Bird, i32) = conn
+            .run(move |c| {
+                worstbird_month
+                    .filter(bird_id.eq(birdid as i32))
+                    .inner_join(bird)
+                    .select(((id, name, description, assetid, url, width, height), votes))
+                    .get_result(c)
+            })
+            .await?;
 
         let mut context = TeraDownVote {
             bird: my_bird.0,
@@ -220,10 +242,17 @@ fn downvote_month(
             context.error_message = Some(error_message);
             Ok(Template::render("already_downvoted", &context))
         } else {
-            let wb_month: models::WBMonth =
-                diesel::update(worstbird_month.find((birdid as i32, sel_month as i32, sel_year)))
+            let wb_month: models::WBMonth = conn
+                .run(move |c| {
+                    diesel::update(worstbird_month.find((
+                        birdid as i32,
+                        sel_month as i32,
+                        sel_year,
+                    )))
                     .set(votes.eq(votes + 1))
-                    .get_result(&*conn)?;
+                    .get_result(c)
+                })
+                .await?;
 
             context.votes = wb_month.votes;
             set_cookie("month", &mut cookies, birdid)?;
@@ -238,24 +267,25 @@ fn downvote_month(
 // fn get_months(conn: PgDatabase) -> Result<Vec<Month>, Box<dyn std::error::Error>> {}
 
 #[get("/<sel_year>")]
-fn get_worstbird_year(
-    conn: PgDatabase,
-    sel_year: i32,
-) -> Result<Template, Box<dyn std::error::Error>> {
+async fn get_worstbird_year(conn: PgDatabase, sel_year: i32) -> Result<Template, CustomError> {
     check_year(sel_year)?;
     let now = Local::now();
-    let mut distinct_years = get_distinct_years(&*conn)?;
+    let mut distinct_years = get_distinct_years(&conn).await?;
     distinct_years.push(now.year());
 
-    let distinct_months: Vec<u32> = get_distinct_months(&conn, sel_year)?;
+    let distinct_months: Vec<u32> = get_distinct_months(&conn, sel_year).await?;
 
     use worstbird_db::schema::bird::dsl::*;
     use worstbird_db::schema::worstbird_year::dsl::*;
-    let birds: Vec<(models::Bird, i32)> = worstbird_year
-        .filter(year.eq(sel_year as i32))
-        .inner_join(bird)
-        .select(((id, name, description, assetid, url, width, height), votes))
-        .load(&*conn)?;
+    let birds: Vec<(models::Bird, i32)> = conn
+        .run(move |c| {
+            worstbird_year
+                .filter(year.eq(sel_year as i32))
+                .inner_join(bird)
+                .select(((id, name, description, assetid, url, width, height), votes))
+                .load(c)
+        })
+        .await?;
 
     let context = TeraTemplate {
         sel_year,
@@ -280,29 +310,33 @@ fn get_worstbird_year(
 }
 
 #[get("/<sel_year>/<sel_month>")]
-fn get_worstbird_month(
+async fn get_worstbird_month(
     conn: PgDatabase,
     sel_year: i32,
     sel_month: u32,
-) -> Result<Template, Box<dyn std::error::Error>> {
+) -> Result<Template, CustomError> {
     check_year(sel_year)?;
     check_month(sel_month)?;
 
     let now = Local::now();
-    let mut distinct_years = get_distinct_years(&conn)?;
+    let mut distinct_years = get_distinct_years(&conn).await?;
     distinct_years.push(now.year());
 
-    let distinct_months: Vec<u32> = get_distinct_months(&conn, sel_year)?;
+    let distinct_months: Vec<u32> = get_distinct_months(&conn, sel_year).await?;
 
     use worstbird_db::schema::bird::dsl::*;
     use worstbird_db::schema::worstbird_month::dsl::*;
 
-    let birds: Vec<(models::Bird, i32)> = worstbird_month
-        .filter(year.eq(sel_year))
-        .filter(month.eq(sel_month as i32))
-        .inner_join(bird)
-        .select(((id, name, description, assetid, url, width, height), votes))
-        .load(&*conn)?;
+    let birds: Vec<(models::Bird, i32)> = conn
+        .run(move |c| {
+            worstbird_month
+                .filter(year.eq(sel_year))
+                .filter(month.eq(sel_month as i32))
+                .inner_join(bird)
+                .select(((id, name, description, assetid, url, width, height), votes))
+                .load(c)
+        })
+        .await?;
 
     let context = TeraTemplate {
         sel_year,
@@ -343,28 +377,30 @@ fn get_index() -> Redirect {
     }
 }
 
-fn get_distinct_years(conn: &PgConnection) -> Result<Vec<i32>, Box<dyn std::error::Error>> {
-    let distinct_years: Vec<DistinctYear> =
-        diesel::sql_query("select distinct year from worstbird_year").load(&*conn)?;
+async fn get_distinct_years(conn: &PgDatabase) -> std::result::Result<Vec<i32>, CustomError> {
+    let distinct_years: Vec<DistinctYear> = conn
+        .run(move |c| diesel::sql_query("select distinct year from worstbird_year").load(c))
+        .await?;
     let years: Vec<i32> = distinct_years.iter().map(|e| e.year).collect();
     Ok(years)
 }
 
-fn get_distinct_months(
-    conn: &PgConnection,
-    year: i32,
-) -> Result<Vec<u32>, Box<dyn std::error::Error>> {
-    let distinct_months: Vec<DistinctMonth> = diesel::sql_query(format!(
-        "select distinct month from worstbird_month where year = {}",
-        year
-    ))
-    .load(&*conn)?;
+async fn get_distinct_months(conn: &PgDatabase, year: i32) -> Result<Vec<u32>, CustomError> {
+    let distinct_months: Vec<DistinctMonth> = conn
+        .run(move |c| {
+            diesel::sql_query(format!(
+                "select distinct month from worstbird_month where year = {}",
+                year
+            ))
+            .load(c)
+        })
+        .await?;
     let months: Vec<u32> = distinct_months.iter().map(|e| e.month as u32).collect();
     Ok(months)
 }
 
 #[database("pg_worstbird")]
-struct PgDatabase(postgres::Client);
+struct PgDatabase(diesel::PgConnection);
 
 #[launch]
 fn rocket() -> _ {
@@ -377,7 +413,7 @@ fn rocket() -> _ {
     rocket::build()
         .attach(Template::fairing())
         .attach(PgDatabase::fairing())
-        .mount("/www", StaticFiles::from("www/"))
+        .mount("/www", FileServer::from("www/"))
         .mount(
             "/",
             routes![
@@ -391,5 +427,4 @@ fn rocket() -> _ {
             ],
         )
         .manage(ip_map)
-        .launch();
 }

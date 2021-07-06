@@ -1,3 +1,4 @@
+use crate::error::CustomError;
 use chrono::prelude::*;
 use chrono::Month;
 use dashmap::DashMap;
@@ -27,14 +28,10 @@ pub struct UserVoteCount {
 }
 
 pub static MAX_IP_VOTE: u32 = 20;
-pub fn set_cookie(
-    key: &str,
-    cookies: &mut CookieJar,
-    bird_id: u32,
-) -> Result<(), Box<dyn std::error::Error>> {
+pub fn set_cookie(key: &str, cookies: &CookieJar, bird_id: u32) -> Result<(), CustomError> {
     let expire_date = get_expire_date().to_rfc2822();
     let cookie_str = format!("{}={}; Expires={}", key, bird_id, expire_date);
-    let mut cookie = Cookie::parse(cookie_str)?;
+    let mut cookie = Cookie::parse(cookie_str).unwrap();
     cookie.set_secure(false);
     cookie.set_path("/downvote");
     cookies.add(cookie);
@@ -67,7 +64,7 @@ pub fn get_expire_date() -> DateTime<Local> {
 }
 
 pub fn get_ip_vote_count(
-    state: State<DashMap<IpAddr, UserVoteCount>>,
+    state: &State<DashMap<IpAddr, UserVoteCount>>,
     remote_addr: SocketAddr,
 ) -> u32 {
     if let Some(mut entry) = state.get_mut(&remote_addr.ip()) {
@@ -93,7 +90,7 @@ pub fn get_ip_vote_count(
         1
     }
 }
-pub fn check_year(year: i32) -> Result<(), Box<dyn std::error::Error>> {
+pub fn check_year(year: i32) -> Result<(), CustomError> {
     if year < 0 || year > 3333 {
         Err("This year does not excist in the worstbird timeline".into())
     } else {
@@ -101,7 +98,7 @@ pub fn check_year(year: i32) -> Result<(), Box<dyn std::error::Error>> {
     }
 }
 
-pub fn check_month(month: u32) -> Result<(), Box<dyn std::error::Error>> {
+pub fn check_month(month: u32) -> Result<(), CustomError> {
     if month < 1 || month > 12 {
         return Err("This month does not exist in this universe".into());
     } else {
