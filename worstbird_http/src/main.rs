@@ -3,14 +3,13 @@
 extern crate rocket;
 #[macro_use]
 extern crate diesel;
-#[macro_use]
-extern crate rocket_contrib;
 
 pub mod session;
 pub mod tera_models;
 pub mod util;
 extern crate dotenv;
 use dotenv::dotenv;
+use std::pin::Pin;
 
 use std::net::IpAddr;
 use std::net::SocketAddr;
@@ -22,12 +21,16 @@ use chrono::Month;
 use num_traits::FromPrimitive;
 
 use crate::tera_models::{TeraDownVote, TeraTemplate};
-use rocket::http::Cookies;
+use rocket::http::CookieJar;
 use rocket::response::Redirect;
 use rocket::State;
 
 use rocket_contrib::serve::StaticFiles;
-use rocket_contrib::templates::Template;
+// use rocket_contrib::templates::Template;
+
+use rocket::response::status::NotFound;
+use rocket_dyn_templates::Template;
+use rocket_sync_db_pools::{database, postgres};
 
 use dashmap::DashMap;
 
@@ -36,19 +39,24 @@ use crate::util::*;
 use worstbird_db::models;
 
 #[get("/downvote/<birdid>/<sel_year>")]
-fn downvote_year_user(
+async fn downvote_year_user(
     year_cookie: YearCookie,
     conn: PgDatabase,
     sel_year: i32,
     birdid: u32,
-) -> Result<Template, Box<dyn std::error::Error>> {
+) -> Result<Template, String> {
     use worstbird_db::schema::bird::dsl::*;
     use worstbird_db::schema::worstbird_year::dsl::*;
-    let downvoted_bird: (models::Bird, i32) = worstbird_year
-        .filter(bird_id.eq(birdid as i32))
-        .inner_join(bird)
-        .select(((id, name, description, assetid, url, width, height), votes))
-        .get_result(&*conn)?;
+
+    let downvoted_bird: (models::Bird, i32) = conn
+        .run(|c| {
+            worstbird_year
+                .filter(bird_id.eq(birdid as i32))
+                .inner_join(bird)
+                .select(((id, name, description, assetid, url, width, height), votes))
+                .get_result(c)
+        })
+        .await;
 
     let previously_downvoted: String = bird
         .filter(id.eq(year_cookie.0 as i32))
@@ -77,21 +85,22 @@ fn downvote_year(
     state: State<DashMap<IpAddr, UserVoteCount>>,
     remote_addr: SocketAddr,
     conn: PgDatabase,
-    mut cookies: Cookies,
+    mut cookies: CookieJar,
     sel_year: i32,
     birdid: u32,
-) -> Result<Template, Box<dyn std::error::Error>> {
+) -> Result<Template, Pin<Box<dyn std::error::Error>>> {
     let now = Local::now();
     check_year(sel_year)?;
 
     if now.year() - 1 == sel_year && now.month() == 1 {
         use worstbird_db::schema::bird::dsl::*;
         use worstbird_db::schema::worstbird_year::dsl::*;
+
         let my_bird: (models::Bird, i32) = worstbird_year
             .filter(bird_id.eq(birdid as i32))
             .inner_join(bird)
             .select(((id, name, description, assetid, url, width, height), votes))
-            .get_result(&*conn)?;
+            .get_result(&conn)?;
 
         let mut context = TeraDownVote {
             bird: my_bird.0,
@@ -171,7 +180,7 @@ fn downvote_month(
     state: State<DashMap<IpAddr, UserVoteCount>>,
     remote_addr: SocketAddr,
     conn: PgDatabase,
-    mut cookies: Cookies,
+    mut cookies: CookieJar,
     sel_year: i32,
     sel_month: u32,
     birdid: u32,
@@ -355,15 +364,17 @@ fn get_distinct_months(
 }
 
 #[database("pg_worstbird")]
-struct PgDatabase(diesel::PgConnection);
-fn main() {
+struct PgDatabase(postgres::Client);
+
+#[launch]
+fn rocket() -> _ {
     dotenv().ok();
     eprintln!("Initialized environment");
     let ip_map: DashMap<IpAddr, UserVoteCount> = DashMap::new();
     eprintln!("Initialized hashmap");
 
     eprintln!("Starting Webserver");
-    rocket::ignite()
+    rocket::build()
         .attach(Template::fairing())
         .attach(PgDatabase::fairing())
         .mount("/www", StaticFiles::from("www/"))

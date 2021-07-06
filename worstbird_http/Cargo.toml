@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rocket = { version = "0.4", features = ["private-cookies"] }
+rocket = { version = "0.5.0-rc.1", features = ["secrets"] }
 diesel = { version = "1.4", features = ["postgres"] }
 worstbird_db = { path = "../worstbird_db/" }
 dotenv = "0.15"
@@ -19,4 +19,12 @@ dashmap = "4"
 [dependencies.rocket_contrib]
 version = "0.4"
 default-features = false
-features = ["tera_templates", "serve", "diesel_postgres_pool"]
+features = ["serve"]
+
+[dependencies.rocket_sync_db_pools]
+version = "0.1.0-rc.1"
+features = ["postgres_pool"]
+
+[dependencies.rocket_dyn_templates]
+version = "0.1.0-rc.1"
+features = [ "tera"]

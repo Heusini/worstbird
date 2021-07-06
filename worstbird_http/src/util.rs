@@ -3,7 +3,7 @@ use chrono::Month;
 use dashmap::DashMap;
 use diesel::sql_types::Integer;
 use num_traits::FromPrimitive;
-use rocket::http::{Cookie, Cookies};
+use rocket::http::{Cookie, CookieJar};
 use rocket::State;
 use std::net::IpAddr;
 use std::net::SocketAddr;
@@ -29,7 +29,7 @@ pub struct UserVoteCount {
 pub static MAX_IP_VOTE: u32 = 20;
 pub fn set_cookie(
     key: &str,
-    cookies: &mut Cookies,
+    cookies: &mut CookieJar,
     bird_id: u32,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let expire_date = get_expire_date().to_rfc2822();

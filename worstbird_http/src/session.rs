@@ -4,9 +4,10 @@ use rocket::request::{self, FromRequest, Request};
 #[derive(Debug)]
 pub struct MonthCookie(pub usize);
 
-impl<'a, 'r> FromRequest<'a, 'r> for YearCookie {
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for YearCookie {
     type Error = std::convert::Infallible;
-    fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, Self::Error> {
+    async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
         request
             .cookies()
             .get("year")
@@ -19,9 +20,10 @@ impl<'a, 'r> FromRequest<'a, 'r> for YearCookie {
 #[derive(Debug)]
 pub struct YearCookie(pub usize);
 
-impl<'a, 'r> FromRequest<'a, 'r> for MonthCookie {
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for MonthCookie {
     type Error = std::convert::Infallible;
-    fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, Self::Error> {
+    async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
         request
             .cookies()
             .get("month")
