@@ -4,6 +4,7 @@ extern crate rocket;
 #[macro_use]
 extern crate diesel;
 
+mod cache;
 pub mod error;
 pub mod session;
 pub mod tera_models;
@@ -26,8 +27,6 @@ use rocket::fs::FileServer;
 use rocket::http::CookieJar;
 use rocket::response::Redirect;
 use rocket::State;
-
-// use rocket_contrib::templates::Template;
 
 use rocket_dyn_templates::Template;
 use rocket_sync_db_pools::database;
@@ -381,7 +380,8 @@ async fn get_distinct_years(conn: &PgDatabase) -> std::result::Result<Vec<i32>, 
     let distinct_years: Vec<DistinctYear> = conn
         .run(move |c| diesel::sql_query("select distinct year from worstbird_year").load(c))
         .await?;
-    let years: Vec<i32> = distinct_years.iter().map(|e| e.year).collect();
+    let mut years: Vec<i32> = distinct_years.iter().map(|e| e.year).collect();
+    years.sort();
     Ok(years)
 }
 
@@ -395,9 +395,15 @@ async fn get_distinct_months(conn: &PgDatabase, year: i32) -> Result<Vec<u32>, C
             .load(c)
         })
         .await?;
-    let months: Vec<u32> = distinct_months.iter().map(|e| e.month as u32).collect();
+    let mut months: Vec<u32> = distinct_months.iter().map(|e| e.month as u32).collect();
+    months.sort();
     Ok(months)
 }
+
+// #[get("/www/index.css")]
+// async fn get_css(cache: &State<Cache>) -> &Cache {
+//     cache.inner()
+// }
 
 #[database("pg_worstbird")]
 struct PgDatabase(diesel::PgConnection);
@@ -409,11 +415,16 @@ fn rocket() -> _ {
     let ip_map: DashMap<IpAddr, UserVoteCount> = DashMap::new();
     eprintln!("Initialized hashmap");
 
+    // let mut file = std::fs::File::open("www/index.css").unwrap();
+
+    // let mut cache = Cache { bytes: Vec::new() };
+    // file.read_to_end(&mut cache.bytes).unwrap();
+
     eprintln!("Starting Webserver");
     rocket::build()
         .attach(Template::fairing())
         .attach(PgDatabase::fairing())
-        .mount("/www", FileServer::from("www/"))
+        .mount("/www/staticfiles/", FileServer::from("www/"))
         .mount(
             "/",
             routes![
@@ -423,8 +434,10 @@ fn rocket() -> _ {
                 downvote_month_user,
                 downvote_year_user,
                 get_worstbird_year,
-                get_worstbird_month
+                get_worstbird_month,
+                // get_css,
             ],
         )
         .manage(ip_map)
+    // .manage(cache)
 }
