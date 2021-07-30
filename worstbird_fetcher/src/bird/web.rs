@@ -86,7 +86,7 @@ pub fn suprise_me(url: &str) -> Result<(String, String)> {
 
     headers.insert(
         reqwest::header::ACCEPT_LANGUAGE,
-        HeaderValue::from_str("en-US,en;q=0.5")?,
+        HeaderValue::from_str("de;q=0.5")?,
     );
 
     let client = reqwest::blocking::Client::builder()
