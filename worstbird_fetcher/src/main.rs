@@ -36,6 +36,7 @@ fn get_new_bird() -> Result<BirdEntry> {
     let embed_id = get_embbed(&data);
 
     println!("{:?}, {:?}, {:?}", name, embed_id, description);
+    println!("{:?}", url);
 
     if embed_id.is_ok() && name.is_ok() && description.is_ok() {
         if let Ok((width, height)) = get_image_size(&embed_id.as_ref().unwrap()) {
@@ -175,5 +176,16 @@ fn main() -> ! {
         //  - create new year
         // calculate sleep
         // sleep
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn get_bird_test() {
+        let bird = get_new_bird();
+        println!("{:?}", bird);
+        assert!(bird.is_ok());
     }
 }

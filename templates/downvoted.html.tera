@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="/www/index.css" rel="stylesheet" type="text/css" />
+    <link href="/www/staticfiles/index.css" rel="stylesheet" type="text/css" />
     <title>Worstbird</title>
 </head>
 
@@ -14,19 +14,17 @@
         <h1>Worstbird</h1>
         <div id="votebirds">
             <div class="bird">
-                <h4>{{ bird.name }}</h4>
-                </a>
+                <h4>You downvoted {{ bird.name }} for {{ month }} {{ year }} :(</h4>
                 <iframe width="{{ bird.width }}" height="{{ bird.height + 130 }}"
                     src="https://macaulaylibrary.org/asset/{{ bird.assetid }}/embed/320" frameborder="0" allowfullscreen
                     style="width:320px;"></iframe>
-                <div class="text">
-                    <p>{{ bird.description }}</p>
-                </div>
+                {# <div class="text">
+                    <p>{{ bird.0.description }}</p>
+                </div> #}
                 <div class="vote">
                     <a href="{{ referer }}">Go Back</a>
                     <a id="votecounter">Votes: {{ votes }}</a>
                 </div>
-                <p class="error">{{ error_message }}</p>
             </div>
         </div>
     </div>
