@@ -37,6 +37,9 @@
             </div>
             {%- endfor -%}
             {%- endif -%}
+            <div id="about">
+                <a href="about.html">About</a>
+            </div>
         </div>
 
         {%- if birds|length == 0 and not sel_month -%}

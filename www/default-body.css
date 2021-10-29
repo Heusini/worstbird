@@ -1,0 +1,36 @@
+* {
+  margin: 0;
+  padding: 0;
+  text-decoration: none;
+}
+
+body {
+  font-family: "Helvetica", "Arial", sans-serif;
+}
+
+body, html {
+  height: 100%;
+  position: relative;
+}
+
+#page-container {
+  display: block;
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+#content-wrap {
+  padding-bottom: 10ex;
+  padding-top: 4vw;
+}
+
+h1 {
+  display: block;
+  font-size: 2em;
+  margin-block-start: 0.67em;
+  margin-block-end: 0.67em;
+  margin-inline-start: 0px;
+  margin-inline-end: 0px;
+  font-weight: bold;
+}
