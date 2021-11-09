@@ -22,6 +22,8 @@ services:
         - LETSENCRYPT_HOST=yourdomain.toplevel
         - LETSENCRYPT_EMAIL=max.musterman@musterdomain.musterdeutschland
         - ROCKET_DATABASES={pg_worstbird={url="postgres://admin:SuperSecure@worstbird_db:5432/worstbird"}}
+        - ROCKET_SECRET_KEY="3FDC82926D9ED1700A489021F44A01457E9BBF52A09728345E17EEDEBCA2A782"
+        - ROCKET_ADDRESS="0.0.0.0"
         - WAIT_HOSTS=worstbird_db:5432
         - WAIT_HOSTS_TIMEOUT=300
         - WAIT_SLEEP_INTERVAL=30
