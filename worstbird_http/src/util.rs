@@ -33,8 +33,9 @@ pub fn set_cookie(key: &str, cookies: &CookieJar, bird_id: u32) -> Result<(), Cu
     let cookie_str = format!("{}={}; Expires={}", key, bird_id, expire_date);
     let mut cookie = Cookie::parse(cookie_str).unwrap();
     cookie.set_secure(false);
+    cookie.http_only();
     cookie.set_path("/downvote");
-    cookies.add(cookie);
+    cookies.add_private(cookie);
     Ok(())
 }
 

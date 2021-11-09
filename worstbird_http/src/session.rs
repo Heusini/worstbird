@@ -10,7 +10,7 @@ impl<'r> FromRequest<'r> for YearCookie {
     async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
         request
             .cookies()
-            .get("year")
+            .get_private("year")
             .and_then(|cookie| cookie.value().parse().ok())
             .map(YearCookie)
             .or_forward(())
@@ -26,7 +26,7 @@ impl<'r> FromRequest<'r> for MonthCookie {
     async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
         request
             .cookies()
-            .get("month")
+            .get_private("month")
             .and_then(|cookie| cookie.value().parse().ok())
             .map(MonthCookie)
             .or_forward(())
