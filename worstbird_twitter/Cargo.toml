@@ -8,6 +8,11 @@ edition = "2018"
 [dependencies]
 twitter_api = { git = "https://github.com/Heusini/RustTwitterOAuth1", branch = "master"}
 dotenv = "0.15"
-rocket = { version = "0.5.0-rc.1", features = ["json"]}
 serde_json = "1.0"
 serde = {version = "1.0", features = ["derive"]}
+tokio = { version = "1.13.0", features = ["full"] }
+chrono = "0.4"
+worstbird_db = { path = "../worstbird_db/" }
+
+[dev-dependencies]
+tokio-test = "*"
