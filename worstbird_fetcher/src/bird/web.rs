@@ -91,12 +91,13 @@ pub fn get_image_size(embed_id: &str) -> Result<(usize, usize)> {
 pub fn get_iframe_size(embed_id: &str) -> Result<(usize, usize)> {
     let default_bottom_height = 32;
     let margin_top_bottom = 21;
+    let margin_html = 15;
     let (width, height) = get_image_size(embed_id)?;
     let add_lines = get_text_size(embed_id)?;
 
     Ok((
         width,
-        height + add_lines + default_bottom_height + margin_top_bottom,
+        height + add_lines + default_bottom_height + margin_top_bottom + margin_html,
     ))
 }
 
