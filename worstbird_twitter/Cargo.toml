@@ -1,0 +1,18 @@
+[package]
+name = "worstbird_twitter"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+twitter_api = { git = "https://github.com/Heusini/RustTwitterOAuth1", branch = "master"}
+dotenv = "0.15"
+serde_json = "1.0"
+serde = {version = "1.0", features = ["derive"]}
+tokio = { version = "1.13.0", features = ["full"] }
+chrono = "0.4"
+worstbird_db = { path = "../worstbird_db/" }
+
+[dev-dependencies]
+tokio-test = "*"

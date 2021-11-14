@@ -2,7 +2,7 @@ use crate::schema::bird;
 use crate::schema::worstbird_month;
 use crate::schema::worstbird_year;
 use serde::Serialize;
-#[derive(Debug, Queryable, Serialize)]
+#[derive(Debug, Queryable, Serialize, Clone)]
 pub struct Bird {
     pub id: i32,
     pub name: String,
