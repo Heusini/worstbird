@@ -39,7 +39,7 @@ fn get_new_bird() -> Result<BirdEntry> {
     println!("{:?}", url);
 
     if embed_id.is_ok() && name.is_ok() && description.is_ok() {
-        if let Ok((width, height)) = get_image_size(&embed_id.as_ref().unwrap()) {
+        if let Ok((width, height)) = get_iframe_size(&embed_id.as_ref().unwrap()) {
             let bird = BirdEntry {
                 url,
                 name: name.unwrap(),
