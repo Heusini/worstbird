@@ -15,7 +15,7 @@
         <div id="votebirds">
             <div class="bird">
                 <h4>You downvoted {{ bird.name }} for {{ month }} {{ year }} :(</h4>
-                <iframe width="{{ bird.width }}" height="{{ bird.height + 130 }}"
+                <iframe width="{{ bird.width }}" height="{{ bird.height }}"
                     src="https://macaulaylibrary.org/asset/{{ bird.assetid }}/embed/320" frameborder="0" allowfullscreen
                     style="width:320px;"></iframe>
                 {# <div class="text">

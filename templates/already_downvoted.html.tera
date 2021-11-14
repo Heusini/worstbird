@@ -16,7 +16,7 @@
             <div class="bird">
                 <h4>{{ bird.name }}</h4>
                 </a>
-                <iframe width="{{ bird.width }}" height="{{ bird.height + 130 }}"
+                <iframe width="{{ bird.width }}" height="{{ bird.height }}"
                     src="https://macaulaylibrary.org/asset/{{ bird.assetid }}/embed/320" frameborder="0" allowfullscreen
                     style="width:320px;"></iframe>
                 <div class="text">

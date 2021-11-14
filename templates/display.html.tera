@@ -58,7 +58,7 @@
             {%- if bird.1 == max_vote -%}
             <div class="bird">
                 <h4>{{ bird.0.name }}</h4>
-                <iframe width="{{ bird.0.width}}" height="{{ bird.0.height + 132 }}"
+                <iframe width="{{ bird.0.width}}" height="{{ bird.0.height }}"
                     src="https://macaulaylibrary.org/asset/{{ bird.0.assetid }}/embed/320" frameborder="0"
                     allowfullscreen style="width:320px;"></iframe>
                 <div class="text" onclick=expand(this)>
@@ -77,7 +77,7 @@
             {%- if bird.1 != max_vote -%}
             <div class="bird">
                 <h4>{{ bird.0.name }}</h4>
-                <iframe width="{{ bird.0.width }}" height="{{ bird.0.height + 132 }}"
+                <iframe width="{{ bird.0.width }}" height="{{ bird.0.height }}"
                     src="https://macaulaylibrary.org/asset/{{ bird.0.assetid }}/embed/320" frameborder="0"
                     allowfullscreen style="width:320px;"></iframe>
                 <div class="text" onclick=expand(this)>
