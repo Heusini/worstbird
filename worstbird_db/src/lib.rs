@@ -28,6 +28,13 @@ pub fn get_birds_year(sel_year: i32, con: &PgConnection) -> Result<Vec<(models::
         .load(con)?)
 }
 
+pub fn get_birds(con: &PgConnection) -> Result<Vec<models::Bird>> {
+    use crate::schema::bird::dsl::*;
+    Ok(bird
+        .select((id, name, description, assetid, url, width, height))
+        .load(con)?)
+}
+
 pub fn get_birds_month(
     sel_month: i32,
     sel_year: i32,
