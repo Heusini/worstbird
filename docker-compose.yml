@@ -46,20 +46,37 @@ services:
         - WAIT_SLEEP_INTERVAL=30
         - WAIT_HOST_CONNECT_TIMEOUT=30
       command: ./worstbird_fetcher
-  # diesel_setup:
-  #     build:
-  #       context: .
-  #       dockerfile: DockerDiesel
-  #     depends_on:
-  #       - worstbird_db
-  #     networks:
-  #       - worstbird_prod
-  #     environment:
-  #       - WAIT_HOSTS=worstbird_db:5432
-  #       - WAIT_HOSTS_TIMEOUT=300
-  #       - WAIT_SLEEP_INTERVAL=30
-  #       - WAIT_HOST_CONNECT_TIMEOUT=30
-  #     command: sh -c "/wait && diesel database setup && diesel migration run"
+  worstbird_twitter:
+      build: 
+        context: .
+        dockerfile: DockerTwitter
+      depends_on:
+          - worstbird_db
+          # - diesel_setup
+      container_name: worstbird_twitter
+      networks:
+        - worstbird_prod
+      environment:
+        - DATABASE_URL=postgres://admin:SuperSecure@worstbird_db:5432/worstbird
+        - WAIT_HOSTS=worstbird_db:5432
+        - WAIT_HOSTS_TIMEOUT=300
+        - WAIT_SLEEP_INTERVAL=30
+        - WAIT_HOST_CONNECT_TIMEOUT=30
+      command: ./worstbird_twitter
+  diesel_setup:
+      build:
+        context: .
+        dockerfile: DockerDiesel
+      depends_on:
+        - worstbird_db
+      networks:
+        - worstbird_prod
+      environment:
+        - WAIT_HOSTS=worstbird_db:5432
+        - WAIT_HOSTS_TIMEOUT=300
+        - WAIT_SLEEP_INTERVAL=30
+        - WAIT_HOST_CONNECT_TIMEOUT=30
+      command: sh -c "/wait && diesel database setup && diesel migration run"
 
 
   worstbird_db:

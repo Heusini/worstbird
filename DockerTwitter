@@ -1,0 +1,31 @@
+FROM rustlang/rust:nightly as build
+
+# create a new empty shell project
+RUN USER=root cargo new --bin worstbird
+WORKDIR /worstbird
+
+
+# copy over your manifests
+COPY ./Cargo.lock ./Cargo.lock
+
+# this build step will cache your dependencies
+RUN cargo build --release
+RUN rm -rf src/
+
+COPY ./worstbird_twitter/Cargo.toml ./Cargo.toml
+COPY ./worstbird_twitter/src ./src
+COPY ./worstbird_db /worstbird_db
+RUN ls target/release/deps/
+
+# build for release
+RUN cargo build --release 
+
+
+FROM debian:buster-slim
+
+RUN apt-get update \
+    && apt-get -y install libpq-dev gcc
+COPY --from=build /worstbird/target/release/worstbird_twitter .
+COPY ./.env .
+
+CMD ["./worstbird_twitter"]

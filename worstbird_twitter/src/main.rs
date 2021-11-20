@@ -90,6 +90,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ),
     );
     loop {
+        println!("Wait loop started");
         let wait_time = calc_time_to_end_of_month();
         std::thread::sleep(wait_time);
         send_post(&twitter_api).await?;
