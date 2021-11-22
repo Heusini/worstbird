@@ -4,6 +4,9 @@ use std::env;
 use twitter_api::{SigningKey, TwitterApi};
 
 use chrono::prelude::*;
+use chrono::Month;
+use num_traits::FromPrimitive;
+
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use worstbird_db::*;
@@ -48,6 +51,18 @@ fn calc_time_to_end_of_month() -> Duration {
     duration.to_std().unwrap()
 }
 
+fn generate_msg(bird: worstbird_db::models::Bird, month: u32, year: u32) -> String {
+    format!(
+        "Worstbird of {} {}: {}\n{}\n{}\n{}",
+        Month::from_u32(month).unwrap().name(),
+        year,
+        bird.name,
+        "@daspodcastufo #daspodcastufo".to_string(),
+        "worstbird.eu".to_string(),
+        bird.url,
+    )
+}
+
 async fn send_post(twitter_api: &TwitterApi) -> Result<(), Box<dyn std::error::Error>> {
     let now = Utc::now();
     let month = now.month() as i32;
@@ -57,14 +72,10 @@ async fn send_post(twitter_api: &TwitterApi) -> Result<(), Box<dyn std::error::E
     let con = establish_connection_env()?;
 
     let birds = get_worstbird_month(prev_month, prev_year, &con)?;
+
     for bird in birds.into_iter() {
-        let text = format!(
-            "The worstbird of the month: {}\n{} {}\n{}",
-            bird.name,
-            "@daspodcastufo".to_string(),
-            "worstbird.eu".to_string(),
-            bird.url,
-        );
+        let text = generate_msg(bird, prev_month as u32, prev_year as u32);
+        println!("{}", &text);
 
         tweet(
             &twitter_api,
@@ -121,14 +132,9 @@ mod tests {
         }
         assert!(true);
     }
-    macro_rules! aw {
-        ($e:expr) => {
-            tokio_test::block_on($e)
-        };
-    }
 
-    #[test]
-    fn test_tweet() {
+    #[tokio::test]
+    async fn test_tweet() {
         dotenv().ok();
         let twitter_api = TwitterApi::new(
             &env::var("CONSUMER_KEY").unwrap(),
@@ -139,6 +145,6 @@ mod tests {
             ),
         );
 
-        aw!(send_post(&twitter_api));
+        assert!(send_post(&twitter_api).await.is_ok());
     }
 }

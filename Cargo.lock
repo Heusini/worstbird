@@ -3237,6 +3237,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "dotenv",
+ "num-traits",
  "serde",
  "serde_json",
  "tokio",
