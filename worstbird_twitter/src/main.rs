@@ -86,6 +86,10 @@ async fn send_post(twitter_api: &TwitterApi) -> Result<(), Box<dyn std::error::E
         )
         .await?;
     }
+    println!(
+        "Couldn't find worstbird for Month: {} Year: {}",
+        prev_month, prev_year
+    );
     Ok(())
 }
 
@@ -101,8 +105,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ),
     );
     loop {
-        println!("Wait loop started");
+        let now = Utc::now();
+        println!("Wait loop started: {}", now);
         let wait_time = calc_time_to_end_of_month();
+        println!("Next loop start: {}d", wait_time.as_secs() as f32 / 86400.0);
         std::thread::sleep(wait_time);
         send_post(&twitter_api).await?;
     }
@@ -110,7 +116,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 // takes the original month and returns the previous year if the month is january
 fn get_previous_year_if_necessary(month: i32, year: i32) -> i32 {
-    if month == 12 {
+    if month == 1 {
         year - 1
     } else {
         year
