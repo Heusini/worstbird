@@ -51,7 +51,7 @@ fn calc_time_to_end_of_month() -> Duration {
     duration.to_std().unwrap()
 }
 
-fn generate_msg(bird: worstbird_db::models::Bird, month: u32, year: u32) -> String {
+fn generate_msg(bird: &worstbird_db::models::Bird, month: u32, year: u32) -> String {
     format!(
         "Worstbird of {} {}: {}\n{}\n{}\n{}",
         Month::from_u32(month).unwrap().name(),
@@ -73,7 +73,7 @@ async fn send_post(twitter_api: &TwitterApi) -> Result<(), Box<dyn std::error::E
 
     let birds = get_worstbird_month(prev_month, prev_year, &con)?;
 
-    for bird in birds.into_iter() {
+    for bird in &birds {
         let text = generate_msg(bird, prev_month as u32, prev_year as u32);
         println!("{}", &text);
 
@@ -86,10 +86,12 @@ async fn send_post(twitter_api: &TwitterApi) -> Result<(), Box<dyn std::error::E
         )
         .await?;
     }
-    println!(
-        "Couldn't find worstbird for Month: {} Year: {}",
-        prev_month, prev_year
-    );
+    if birds.len() == 0 {
+        println!(
+            "Couldn't find worstbird for Month: {} Year: {}",
+            prev_month, prev_year
+        );
+    }
     Ok(())
 }
 
