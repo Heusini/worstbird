@@ -14,7 +14,7 @@ RUN rm -rf src/
 
 COPY ./worstbird_http/Cargo.toml ./Cargo.toml
 COPY ./worstbird_http/src ./src
-COPY ./worstbird_db ./worstbird_db
+COPY ./worstbird_db /worstbird_db
 RUN ls target/release/deps/
 
 # copy your source tree
