@@ -1,6 +1,7 @@
 use crate::error::CustomError;
 use chrono::prelude::*;
 use chrono::Month;
+use chrono::TimeZone;
 use dashmap::DashMap;
 use diesel::sql_types::Integer;
 use num_traits::FromPrimitive;
@@ -29,10 +30,10 @@ pub struct UserVoteCount {
 
 pub static MAX_IP_VOTE: u32 = 20;
 pub fn set_cookie(key: &str, cookies: &CookieJar, bird_id: u32) -> Result<(), CustomError> {
-    let expire_date = get_expire_date().to_rfc2822();
+    let expire_date = get_utc_expire();
     let cookie_str = format!("{}={}; Expires={}", key, bird_id, expire_date);
     let mut cookie = Cookie::parse(cookie_str).unwrap();
-    cookie.set_secure(false);
+    cookie.set_secure(true);
     cookie.http_only();
     cookie.set_path("/downvote");
     cookies.add_private(cookie);
@@ -51,7 +52,13 @@ pub fn month_to_shortmonth(month: u32) -> String {
     )
 }
 
-pub fn get_expire_date() -> DateTime<Local> {
+pub fn get_utc_expire() -> String {
+    let new_date = get_expire_date();
+    new_date.with_timezone(&Utc);
+    new_date.format("%a, %d %b %Y %T GMT").to_string()
+}
+
+pub fn get_expire_date() -> chrono::DateTime<Local> {
     let now = Local::now();
     let new_date;
 
