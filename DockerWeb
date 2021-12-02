@@ -12,10 +12,9 @@ COPY ./Cargo.lock ./Cargo.lock
 RUN cargo build --release 
 RUN rm -rf src/
 
-COPY ./Cargo.toml ./Cargo.toml
-COPY ./worstbird_http ./worstbird_http
+COPY ./worstbird_http/Cargo.toml ./Cargo.toml
+COPY ./worstbird_http/src ./src
 COPY ./worstbird_db ./worstbird_db
-COPY ./worstbird_fetcher ./worstbird_fetcher
 RUN ls target/release/deps/
 
 # copy your source tree
@@ -23,7 +22,7 @@ RUN mkdir -p ./templates
 COPY ./templates ./templates
 
 # build for release
-RUN cargo build --release -p worstbird_http
+RUN cargo build --release
 
 
 FROM debian:buster-slim
