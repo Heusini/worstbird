@@ -58,7 +58,7 @@ fn generate_msg(bird: &worstbird_db::models::Bird, month: u32, year: u32) -> Str
         year,
         bird.name,
         "@daspodcastufo #daspodcastufo".to_string(),
-        "worstbird.eu".to_string(),
+        format!("https://worstbird.eu/{}/{}", year, month),
         bird.url,
     )
 }
