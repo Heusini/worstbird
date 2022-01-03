@@ -152,7 +152,9 @@ mod tests {
                 &env::var("TOKEN_SECRET").unwrap(),
             ),
         );
+        let response = send_post(&twitter_api).await;
+        println!("{:?}", response);
 
-        assert!(send_post(&twitter_api).await.is_ok());
+        assert!(response.is_ok());
     }
 }

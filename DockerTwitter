@@ -24,7 +24,7 @@ RUN cargo build --release
 FROM debian:buster-slim
 
 RUN apt-get update \
-    && apt-get -y install libpq-dev gcc
+    && apt-get -y install libpq-dev gcc && ca-certificates
 COPY --from=build /worstbird/target/release/worstbird_twitter .
 COPY ./.env .
 
