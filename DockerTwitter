@@ -1,5 +1,6 @@
 FROM rustlang/rust:nightly as build
 
+RUN apt-get update && apt-get -y install ca-certificates
 # create a new empty shell project
 RUN USER=root cargo new --bin worstbird
 WORKDIR /worstbird
@@ -22,9 +23,12 @@ RUN cargo build --release
 
 
 FROM debian:buster-slim
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+ENV SSL_CERT_DIR=/etc/ssl/certs
 
 RUN apt-get update \
-    && apt-get -y install libpq-dev gcc && ca-certificates
+    && apt-get -y install libpq-dev gcc
 COPY --from=build /worstbird/target/release/worstbird_twitter .
 
 CMD ["./worstbird_twitter"]
