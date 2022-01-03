@@ -6,6 +6,9 @@ use dashmap::DashMap;
 use diesel::sql_types::Integer;
 use num_traits::FromPrimitive;
 use rocket::http::{Cookie, CookieJar};
+use rocket::response::{Redirect, Responder};
+use rocket_dyn_templates::Template;
+
 use rocket::State;
 use std::net::IpAddr;
 use std::net::SocketAddr;
@@ -26,6 +29,12 @@ pub struct DistinctMonth {
 pub struct UserVoteCount {
     pub count: u32,
     pub expiration: chrono::DateTime<Local>,
+}
+
+#[derive(Debug, Responder)]
+pub enum TmpRedirectResponse {
+    Template(Template),
+    Redirect(Redirect),
 }
 
 pub static MAX_IP_VOTE: u32 = 20;

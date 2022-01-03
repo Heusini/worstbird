@@ -266,7 +266,10 @@ async fn downvote_month(
 // fn get_months(conn: PgDatabase) -> Result<Vec<Month>, Box<dyn std::error::Error>> {}
 
 #[get("/<sel_year>")]
-async fn get_worstbird_year(conn: PgDatabase, sel_year: i32) -> Result<Template, CustomError> {
+async fn get_worstbird_year(
+    conn: PgDatabase,
+    sel_year: i32,
+) -> Result<TmpRedirectResponse, CustomError> {
     check_year(sel_year)?;
     let now = Local::now();
     let mut distinct_years = get_distinct_years(&conn).await?;
@@ -286,6 +289,14 @@ async fn get_worstbird_year(conn: PgDatabase, sel_year: i32) -> Result<Template,
         })
         .await?;
 
+    if birds.len() == 0 {
+        return Ok(TmpRedirectResponse::Redirect(Redirect::to(format!(
+            "/{}/{}",
+            sel_year,
+            now.month()
+        ))));
+    }
+
     let context = TeraTemplate {
         sel_year,
         sel_month: None,
@@ -302,9 +313,13 @@ async fn get_worstbird_year(conn: PgDatabase, sel_year: i32) -> Result<Template,
     };
 
     if sel_year == now.year() - 1 && now.month() == 1 {
-        Ok(Template::render("vote", &context))
+        Ok(TmpRedirectResponse::Template(Template::render(
+            "vote", &context,
+        )))
     } else {
-        Ok(Template::render("display", &context))
+        Ok(TmpRedirectResponse::Template(Template::render(
+            "display", &context,
+        )))
     }
 }
 
