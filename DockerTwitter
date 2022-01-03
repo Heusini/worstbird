@@ -26,6 +26,5 @@ FROM debian:buster-slim
 RUN apt-get update \
     && apt-get -y install libpq-dev gcc
 COPY --from=build /worstbird/target/release/worstbird_twitter .
-COPY ./.env .
 
 CMD ["./worstbird_twitter"]
