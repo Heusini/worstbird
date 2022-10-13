@@ -47,7 +47,6 @@ async fn downvote_year_user(
 ) -> Result<Template, CustomError> {
     use worstbird_db::schema::bird::dsl::*;
     use worstbird_db::schema::worstbird_year::dsl::*;
-
     let downvoted_bird: (models::Bird, i32) = conn
         .run(move |c| {
             worstbird_year
