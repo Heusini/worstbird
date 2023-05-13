@@ -152,8 +152,15 @@ mod tests {
                 &env::var("TOKEN_SECRET").unwrap(),
             ),
         );
-        let response = send_post(&twitter_api).await;
-        println!("{:?}", response);
+        let text = "Test tweet".to_string();
+        let response = tweet(
+            &twitter_api,
+            TweetMSG {
+                size: text.len() as i32,
+                text,
+            },
+        )
+        .await;
 
         assert!(response.is_ok());
     }
