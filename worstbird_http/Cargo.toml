@@ -9,6 +9,8 @@ edition = "2018"
 [dependencies]
 rocket = { version = "0.5.0-rc.1", features = ["secrets"] }
 diesel = { version = "1.4", features = ["postgres"] }
+r2d2 = "0.8.9"
+r2d2-diesel = "1.0.0"
 worstbird_db = { path = "../worstbird_db/" }
 dotenv = "0.15"
 chrono = "0.4"
