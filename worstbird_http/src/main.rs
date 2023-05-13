@@ -4,6 +4,8 @@ extern crate rocket;
 #[macro_use]
 extern crate diesel;
 
+extern crate rocket_sync_db_pools;
+
 mod cache;
 pub mod error;
 pub mod session;
@@ -17,6 +19,9 @@ use std::net::IpAddr;
 use std::net::SocketAddr;
 
 use diesel::prelude::*;
+// use rocket_sync_db_pools::database;
+// use rocket_sync_db_pools::diesel::PgConnection;
+use rocket_sync_db_pools::{database, diesel::PgConnection, Connection};
 
 use chrono::prelude::*;
 use chrono::Month;
@@ -29,7 +34,6 @@ use rocket::response::Redirect;
 use rocket::State;
 
 use rocket_dyn_templates::Template;
-use rocket_sync_db_pools::database;
 
 use dashmap::DashMap;
 
@@ -427,7 +431,16 @@ async fn get_distinct_months(conn: &PgDatabase, year: i32) -> Result<Vec<u32>, C
 // }
 
 #[database("pg_worstbird")]
-struct PgDatabase(diesel::PgConnection);
+struct PgDatabase(PgConnection);
+// impl Connection for PgDatabase {
+//     type Error = diesel::result::Error;
+//
+//     fn get() -> Result<Self, Self::Error> {
+//         let pool = database::pool::<rocket_sync_db_pools::diesel::PgConnection>()?;
+//         let conn = pool.get()?;
+//         Ok(PgDatabase(conn))
+//     }
+// }
 
 #[launch]
 fn rocket() -> _ {
