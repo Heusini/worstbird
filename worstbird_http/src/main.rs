@@ -390,6 +390,13 @@ fn get_index() -> Redirect {
     }
 }
 
+#[get("/robots.txt")]
+fn get_robots() -> &'static str {
+    "User-agent: *\n
+Disallow: /downvote?\n
+Disallow: /downvote/"
+}
+
 async fn get_distinct_years(conn: &PgDatabase) -> std::result::Result<Vec<i32>, CustomError> {
     let distinct_years: Vec<DistinctYear> = conn
         .run(move |c| diesel::sql_query("select distinct year from worstbird_year").load(c))
@@ -449,6 +456,7 @@ fn rocket() -> _ {
                 downvote_year_user,
                 get_worstbird_year,
                 get_worstbird_month,
+                get_robots,
                 // get_css,
             ],
         )
