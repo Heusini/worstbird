@@ -391,10 +391,12 @@ fn get_index() -> Redirect {
 }
 
 #[get("/robots.txt")]
-fn get_robots() -> &'static str {
-    "User-agent: *\n
+fn get_robots() -> rocket::response::content::Plain<&'static str> {
+    rocket::response::content::Plain(
+        "User-agent: *\n
 Disallow: /downvote?\n
-Disallow: /downvote/"
+Disallow: /downvote/",
+    )
 }
 
 async fn get_distinct_years(conn: &PgDatabase) -> std::result::Result<Vec<i32>, CustomError> {
