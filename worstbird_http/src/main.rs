@@ -393,8 +393,8 @@ fn get_index() -> Redirect {
 #[get("/robots.txt")]
 fn get_robots() -> rocket::response::content::Plain<&'static str> {
     rocket::response::content::Plain(
-        "User-agent: *\n
-Disallow: /downvote?\n
+        "User-agent: *
+Disallow: /downvote?
 Disallow: /downvote/",
     )
 }
