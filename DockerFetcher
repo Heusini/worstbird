@@ -22,7 +22,7 @@ RUN ls target/release/deps/
 RUN cargo build --release -p worstbird_fetcher
 
 
-FROM debian:buster-slim
+FROM debian:bookworm-slim
 RUN apt-get update \
     && apt-get -y install libpq-dev gcc
 
