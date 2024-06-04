@@ -4,7 +4,7 @@ use imagesize;
 
 pub fn get_bird_name(data: &str) -> Result<String> {
     let name: String = data
-        .split(r#"Media--hero-title">"#)
+        .split(r#"Heading-main">"#)
         .nth(1)
         .ok_or("no bird name")?
         .chars()
