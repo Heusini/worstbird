@@ -1,3 +1,4 @@
+use rocket::http::Status;
 use rocket::outcome::IntoOutcome;
 use rocket::request::{self, FromRequest, Request};
 
@@ -13,7 +14,7 @@ impl<'r> FromRequest<'r> for YearCookie {
             .get_private("year")
             .and_then(|cookie| cookie.value().parse().ok())
             .map(YearCookie)
-            .or_forward(())
+            .or_forward(Status::new(302))
     }
 }
 
@@ -29,6 +30,6 @@ impl<'r> FromRequest<'r> for MonthCookie {
             .get_private("month")
             .and_then(|cookie| cookie.value().parse().ok())
             .map(MonthCookie)
-            .or_forward(())
+            .or_forward(Status::new(302))
     }
 }

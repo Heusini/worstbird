@@ -18,7 +18,7 @@ pub fn establish_connection_env() -> Result<PgConnection> {
     Ok(PgConnection::establish(&database_url)?)
 }
 
-pub fn get_birds_year(sel_year: i32, con: &PgConnection) -> Result<Vec<(models::Bird, i32)>> {
+pub fn get_birds_year(sel_year: i32, con: &mut PgConnection) -> Result<Vec<(models::Bird, i32)>> {
     use crate::schema::bird::dsl::*;
     use crate::schema::worstbird_year::dsl::*;
     Ok(worstbird_year
@@ -28,7 +28,7 @@ pub fn get_birds_year(sel_year: i32, con: &PgConnection) -> Result<Vec<(models::
         .load(con)?)
 }
 
-pub fn get_birds(con: &PgConnection) -> Result<Vec<models::Bird>> {
+pub fn get_birds(con: &mut PgConnection) -> Result<Vec<models::Bird>> {
     use crate::schema::bird::dsl::*;
     Ok(bird
         .select((id, name, description, assetid, url, width, height))
@@ -38,7 +38,7 @@ pub fn get_birds(con: &PgConnection) -> Result<Vec<models::Bird>> {
 pub fn get_birds_month(
     sel_month: i32,
     sel_year: i32,
-    con: &PgConnection,
+    con: &mut PgConnection,
 ) -> Result<Vec<(models::Bird, i32)>> {
     use crate::schema::bird::dsl::*;
     use crate::schema::worstbird_month::dsl::*;
@@ -50,7 +50,10 @@ pub fn get_birds_month(
         .load(con)?)
 }
 
-pub fn get_worstbird_year(sel_year: i32, con: &PgConnection) -> Result<Vec<(models::Bird, i32)>> {
+pub fn get_worstbird_year(
+    sel_year: i32,
+    con: &mut PgConnection,
+) -> Result<Vec<(models::Bird, i32)>> {
     let birds_year = get_birds_year(sel_year, con)?;
     let max_votes = birds_year.iter().map(|e| e.1).max().unwrap_or(0);
 
@@ -63,7 +66,7 @@ pub fn get_worstbird_year(sel_year: i32, con: &PgConnection) -> Result<Vec<(mode
 pub fn get_worstbird_month(
     sel_month: i32,
     sel_year: i32,
-    con: &PgConnection,
+    con: &mut PgConnection,
 ) -> Result<Vec<models::Bird>> {
     let results = get_birds_month(sel_month, sel_year, con)?;
     let max_votes = results.iter().map(|e| e.1).max().unwrap_or(0);

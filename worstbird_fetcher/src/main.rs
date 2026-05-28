@@ -64,7 +64,7 @@ fn establish_connection() -> Result<PgConnection> {
     Ok(PgConnection::establish(&database_url)?)
 }
 
-fn new_month_create(con: &PgConnection) {
+fn new_month_create(con: &mut PgConnection) {
     use worstbird_db::schema::bird::dsl::*;
     use worstbird_db::schema::worstbird_month::dsl::*;
     let mut added_birds = 0;
@@ -97,7 +97,7 @@ fn new_month_create(con: &PgConnection) {
     }
 }
 
-fn new_year_create(con: &PgConnection) {
+fn new_year_create(con: &mut PgConnection) {
     use worstbird_db::schema::worstbird_month::dsl::*;
     let now = Utc::now();
     let worst_birds: Vec<models::WBMonth> = worstbird_month
@@ -142,19 +142,19 @@ fn main() -> ! {
     use worstbird_db::schema::worstbird_month::dsl::*;
     loop {
         let now = Utc::now();
-        if let Ok(connection) = establish_connection() {
+        if let Ok(mut connection) = establish_connection() {
             println!("Executing {:?}", now);
             let results = worstbird_month
                 .filter(month.eq(now.month() as i32))
                 .filter(year.eq(now.year() as i32))
                 .limit(1)
-                .load::<models::WBMonth>(&connection)
+                .load::<models::WBMonth>(&mut connection)
                 .unwrap();
             if results.len() == 0 {
-                new_month_create(&connection);
+                new_month_create(&mut connection);
             }
             if now.month() == 1 {
-                new_year_create(&connection);
+                new_year_create(&mut connection);
             }
             let wait_time = calc_time_to_end_of_month();
             println!("Waiting for next call in {:?}", wait_time);
