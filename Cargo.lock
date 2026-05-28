@@ -1356,28 +1356,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
-name = "openssl-src"
-version = "300.6.0+3.6.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a8e8cbfd3a4a8c8f089147fd7aaa33cf8c7450c4d09f8f80698a0cf093abeff4"
-dependencies = [
- "cc",
-]
-
-[[package]]
-name = "openssl-sys"
-version = "0.9.116"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f28a22dc7140cda5f096e5e7724a6962ca81a7f8bfd2979f9b18c11af56318c4"
-dependencies = [
- "cc",
- "libc",
- "openssl-src",
- "pkg-config",
- "vcpkg",
-]
-
-[[package]]
 name = "parking_lot"
 version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1519,12 +1497,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
-name = "pkg-config"
-version = "0.3.33"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19f132c84eca552bf34cab8ec81f1c1dcc229b811638f9d283dceabe58c5569e"
-
-[[package]]
 name = "polyval"
 version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1549,23 +1521,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ac74c624d6b2d21f425f752262f42188365d7b8ff1aff74c82e45136510a4857"
 
 [[package]]
-name = "pq-src"
-version = "0.1.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "44a5a5a5e0cdb82fd958ae43b1f0aea134c797d7cbf5d5439329f3715245ffb9"
-dependencies = [
- "cc",
- "openssl-src",
- "openssl-sys",
-]
-
-[[package]]
 name = "pq-sys"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "eb954aedd3cf61784ee8e2ee2e8fbd74c445efc3a7405967d1834864d7bf873a"
 dependencies = [
- "pq-src",
  "vcpkg",
 ]
 
@@ -3007,7 +2967,6 @@ dependencies = [
  "diesel 2.3.9",
  "dotenv",
  "imagesize",
- "pq-sys",
  "reqwest",
  "worstbird_db",
 ]
@@ -3021,7 +2980,6 @@ dependencies = [
  "diesel 2.3.9",
  "dotenv",
  "num-traits",
- "pq-sys",
  "r2d2",
  "r2d2-diesel",
  "rocket",

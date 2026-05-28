@@ -8,7 +8,7 @@ edition = "2018"
 reqwest = { version = "*", default-features=false, features = ["rustls-tls", "blocking", "cookies", "gzip"]}
 chrono = "*"
 diesel = { version = "2.3.9", features = ["postgres"] }
-pq-sys = { version = "0.5", features = ["bundled"] }
+# pq-sys = { version = "0.5", features = ["bundled"] }
 dotenv = "0.15.0"
 worstbird_db = { path = "../worstbird_db/" }
 imagesize = "0.8.8"
