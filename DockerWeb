@@ -1,36 +1,36 @@
-FROM rustlang/rust:nightly as build
+FROM rust:alpine3.22 as build
 
 # create a new empty shell project
+RUN rustup toolchain install nightly --allow-downgrade --profile minimal --component clippy
+RUN rustup override set nightly
 RUN USER=root cargo new --bin worstbird
 WORKDIR /worstbird
+RUN apk add pkgconfig openssl-dev libc-dev libpq-dev
 
 
 # copy over your manifests
 COPY ./Cargo.lock ./Cargo.lock
+# COPY ./Cargo.toml ./Cargo.toml
 
 # this build step will cache your dependencies
-RUN rustup override set nightly
-RUN cargo build --release 
+RUN RUSTFLAGS="-C target-feature=-crt-static" cargo build --release 
 RUN rm -rf src/
 
 COPY ./ ./
-#COPY ./worstbird_http/Cargo.toml ./Cargo.toml
-#COPY ./worstbird_http/src ./src
-#COPY ./worstbird_db /worstbird_db
-RUN ls target/release/deps/
 
 # copy your source tree
 RUN mkdir -p ./templates
 COPY ./templates ./templates
 
 # build for release
-RUN cargo build --release
+RUN ls target/release/deps/
+RUN rm ./target/release/deps/worstbird*
+RUN RUSTFLAGS="-C target-feature=-crt-static" cargo build --release -p worstbird_http
 
 
-FROM debian:bookworm-slim
+FROM alpine:latest
+RUN apk update &&  apk add openssl libgcc ca-certificates libpq-dev
 
-RUN apt-get update \
-    && apt-get -y install libpq-dev gcc
 COPY --from=build /worstbird/target/release/worstbird_http .
 
 #RUN mkdir -p ./www
